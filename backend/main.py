@@ -1,7 +1,7 @@
 import os
 import hashlib
 import uvicorn
-from fastapi import FastAPI, Request, Form, HTTPException
+from fastapi import FastAPI, Request, Form, HTTPException, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -22,13 +22,24 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "..", "Template"))
 def get_usuario_logado(request: Request):
     return request.cookies.get("usuario_nome")
 
+# Função para verificar se o administrador está logado
+# Retorna True se o cookie "admin_logado" for igual a "true"
+def admin_logado(request: Request):
+    return request.cookies.get("admin_logado") == "true"
+
+# Função para verificar se o usuário está logado
+# Retorna True se o cookie "usuario_nome" existir
+def usuario_logado(request: Request):
+    return request.cookies.get("usuario_nome") is not None
+
 # --- ROTAS DE NAVEGAÇÃO ---
 
 @app.get("/", response_class=HTMLResponse)
 @app.get("/catalogo", response_class=HTMLResponse)
-async def page_catalogo(request: Request):
+async def page_catalogo(request: Request, is_user: bool = Depends(usuario_logado)):
+    if not is_user:
+        return RedirectResponse("/login")
     usuario = get_usuario_logado(request)
-    logado = usuario is not None
     produtos = []
     try:
         conn = conectar_banco()
@@ -38,7 +49,7 @@ async def page_catalogo(request: Request):
         cursor.close()
         conn.close()
     except: pass
-    return templates.TemplateResponse(request=request, name="catalogo.html", context={"produtos": produtos, "logado": logado, "usuario": usuario})
+    return templates.TemplateResponse(request=request, name="catalogo.html", context={"produtos": produtos, "logado": True, "usuario": usuario})
 
 @app.get("/login", response_class=HTMLResponse)
 async def page_login(request: Request):
@@ -47,10 +58,15 @@ async def page_login(request: Request):
 @app.get("/cadastro", response_class=HTMLResponse)
 async def page_cadastro(request: Request):
     return templates.TemplateResponse(request=request, name="usuario.html")
-
+#proteção de url
 @app.get("/admin", response_class=HTMLResponse)
-async def page_admin(request: Request):
-    return templates.TemplateResponse(request=request, name="admin.html")
+async def page_admin(request: Request, is_admin: bool = Depends(admin_logado)):
+    if not is_admin:
+        return RedirectResponse("/login")
+    return templates.TemplateResponse(
+        request=request,
+        name="admin.html"
+    )
 
 # --- ROTAS DE PROCESSAMENTO (POST) ---
 
