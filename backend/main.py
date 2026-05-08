@@ -60,9 +60,7 @@ async def page_cadastro(request: Request):
     return templates.TemplateResponse(request=request, name="usuario.html")
 #proteção de url
 @app.get("/admin", response_class=HTMLResponse)
-async def page_admin(request: Request, is_admin: bool = Depends(admin_logado)):
-    if not is_admin:
-        return RedirectResponse("/login")
+async def page_admin_login(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="admin.html"
