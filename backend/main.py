@@ -136,5 +136,47 @@ async def logout():
     response.delete_cookie("admin_logado")
     return response
 
+# Rota para exibir o perfil do usuário
+@app.get("/perfil", response_class=HTMLResponse)
+async def page_perfil(request: Request, is_user: bool = Depends(usuario_logado)):
+    if not is_user:
+        return RedirectResponse("/login")
+    usuario = get_usuario_logado(request)
+    return templates.TemplateResponse(request=request, name="perfil.html", context={"usuario": usuario, "logado": True})
+
+# Rota para editar o perfil do usuário logado
+@app.post("/perfil/editar")
+async def editar_perfil(request: Request, nome: str = Form(...), email: str = Form(...), senha: str = Form(...)):
+    usuario = get_usuario_logado(request)
+    if not usuario:
+        raise HTTPException(status_code=401, detail="Usuário não autenticado")
+
+    conn = conectar_banco()
+    cursor = conn.cursor()
+    try:
+        # Verificar se o e-mail já existe para outro usuário
+        cursor.execute("SELECT id_usuario FROM usuario WHERE email = %s AND nome != %s", (email, usuario))
+        email_existente = cursor.fetchone()
+        if email_existente:
+            raise HTTPException(status_code=400, detail="E-mail já está em uso por outro usuário")
+
+        # Atualizar os dados do usuário
+        senha_hash = hashlib.sha256(senha.encode()).hexdigest()
+        cursor.execute(
+            "UPDATE usuario SET nome = %s, email = %s, senha_hash = %s WHERE nome = %s",
+            (nome, email, senha_hash, usuario)
+        )
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=400, detail=f"Erro ao atualizar perfil: {str(e)}")
+    finally:
+        cursor.close()
+        conn.close()
+
+    response = RedirectResponse(url="/perfil", status_code=303)
+    response.set_cookie(key="usuario_nome", value=nome)
+    return response
+
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)

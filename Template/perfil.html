@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
+    
+    <title>Editar Perfil</title>
+
+    <style>
+        .admin-container {
+            margin: 100px auto;
+            max-width: 700px;
+            padding: 30px;
+            background: #111;
+            border-radius: 10px;
+            color: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .admin-container h2 {
+            color: #d4af37;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        td {
+            padding: 12px;
+        }
+
+        label {
+            color: #d4af37;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #333;
+            border-radius: 6px;
+            background: #222;
+            color: white;
+            font-size: 15px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #d4af37;
+        }
+
+        .botoes {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .btn-edit {
+            background: #d4af37;
+            color: black;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-edit:hover {
+            background: #c49b2d;
+        }
+
+        .btn-del {
+            background: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-del:hover {
+            background: #e04343;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <nav class="navbar">
+            <a href="/" class="logo">
+                <img src="/Imagens/logo.png" alt="Logo">
+            </a>
+
+            <ul class="nav-links">
+                <li><a href="/catalogo">Loja</a></li>
+                <li><a href="/logout">Sair</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="admin-container">
+
+        <h2>Editar Perfil</h2>
+
+        <form action="/perfil/editar" method="post">
+
+            <table>
+
+                <tr>
+                    <td>
+                        <label for="nome">Nome</label>
+                    </td>
+
+                    <td>
+                        <input 
+                            type="text" 
+                            id="nome" 
+                            name="nome" 
+                            value="{{ usuario }}" 
+                            required
+                        >
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <label for="email">E-mail</label>
+                    </td>
+
+                    <td>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            required
+                        >
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <label for="senha">Senha</label>
+                    </td>
+
+                    <td>
+                        <input 
+                            type="password" 
+                            id="senha" 
+                            name="senha" 
+                            required
+                        >
+                    </td>
+                </tr>
+
+            </table>
+
+            <div class="botoes">
+                <button type="submit" class="btn-edit">
+                    Salvar Alterações
+                </button>
+
+                <button 
+                    type="button" 
+                    class="btn-del"
+                    onclick="window.location.href='/catalogo'"
+                >
+                    Cancelar
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+
+</body>
+</html>

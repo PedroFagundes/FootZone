@@ -18,7 +18,7 @@
             <li><a href="/catalogo">Catálogo</a></li>
 
             {% if logado %}
-                <li style="color: #d4af37; font-weight: bold;">Olá, {{ usuario }}</li>
+                <li><a href="/perfil" style="color: #d4af37; font-weight: bold;">Olá, {{ usuario }}</a></li>
                 <li><a href="/logout" class="btn-logout" style="color: red; text-decoration: none;">Sair</a></li>
             {% else %}
                 <li><a href="/login" class="btn-login">Login</a></li>
