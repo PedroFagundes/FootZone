@@ -19,12 +19,17 @@ except ImportError:
 
 # --- CONFIGURAÇÃO DE AMBIENTE ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__)) 
+
+# Montagem de arquivos estáticos e imagens
 app.mount("/Static", StaticFiles(directory=os.path.join(BASE_DIR, "..", "Static")), name="static")
 app.mount("/Imagens", StaticFiles(directory=os.path.join(BASE_DIR, "..", "Imagens")), name="imagens")
+
+# Configuração do Jinja2
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "..", "Template"))
 
 # --- UTILITÁRIOS ---
 def get_usuario_logado(request: Request):
+    # Retorna o nome ou string vazia para evitar erro de 'None' no .split() do HTML
     return request.cookies.get("usuario_nome") or ""
 
 # --- ROTAS DE NAVEGAÇÃO (GET) ---
@@ -39,10 +44,13 @@ async def page_catalogo(request: Request):
     try:
         conn = conectar_banco()
         cursor = conn.cursor(dictionary=True, buffered=True)
+        
+        # Busca produtos e suas imagens
         query = "SELECT p.*, pi.url FROM produto p LEFT JOIN produto_imagem pi ON p.id_produto = pi.id_produto"
         cursor.execute(query)
         produtos = cursor.fetchall()
         
+        # Busca avatar se houver usuário logado
         if usuario:
             cursor.execute("SELECT avatar FROM usuario WHERE nome = %s", (usuario,))
             user_data = cursor.fetchone()
@@ -54,9 +62,8 @@ async def page_catalogo(request: Request):
     except Exception as e: 
         print(f"Erro ao carregar catálogo: {e}")
         
-    # CORREÇÃO: Passando request como argumento nomeado obrigatório
     return templates.TemplateResponse(
-        request=request,
+        request=request, 
         name="catalogo.html", 
         context={
             "produtos": produtos, 
@@ -65,10 +72,6 @@ async def page_catalogo(request: Request):
             "logado": usuario != ""
         }
     )
-
-@app.get("/admin", response_class=HTMLResponse)
-async def page_admin(request: Request):
-    return templates.TemplateResponse(request=request, name="admin.html", context={})
 
 @app.get("/login", response_class=HTMLResponse)
 async def page_login(request: Request):
@@ -85,6 +88,10 @@ async def page_cadastro(request: Request):
 @app.get("/empresa", response_class=HTMLResponse)
 async def page_empresa(request: Request):
     return templates.TemplateResponse(request=request, name="empresa.html", context={})
+
+@app.get("/admin", response_class=HTMLResponse)
+async def page_admin(request: Request):
+    return templates.TemplateResponse(request=request, name="admin.html", context={})
 
 @app.get("/perfil", response_class=HTMLResponse)
 async def page_perfil(request: Request):
@@ -144,25 +151,37 @@ async def cadastrar_usuario(nome: str = Form(...), email: str = Form(...), cpf: 
         return RedirectResponse(url="/login", status_code=303)
     except Exception as e:
         conn.rollback()
-        raise HTTPException(status_code=400, detail="Erro cadastro.")
+        raise HTTPException(status_code=400, detail="Erro no cadastro.")
     finally:
         cursor.close()
         conn.close()
 
 @app.post("/cadastrar/empresa")
-async def cadastrar_empresa(nome_empresa: str = Form(...), cnpj: str = Form(...), email: str = Form(...), senha: str = Form(...), telefone: str = Form(...), endereco: str = Form(...)):
+async def cadastrar_empresa(
+    nome_empresa: str = Form(...), 
+    cnpj: str = Form(...), 
+    email: str = Form(...), 
+    senha: str = Form(...), 
+    telefone: str = Form(...), 
+    endereco: str = Form(...)
+):
     conn = conectar_banco()
     cursor = conn.cursor()
     try:
         senha_hash = hashlib.sha256(senha.encode()).hexdigest()
         cnpj_limpo = ''.join(filter(str.isdigit, cnpj))
-        query = "INSERT INTO empresa (nome_empresa, cnpj, email, senha_hash, endereco, telefone) VALUES (%s, %s, %s, %s, %s, %s)"
+        
+        query = """
+            INSERT INTO empresa (nome_empresa, cnpj, email, senha_hash, endereco, telefone) 
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """
         cursor.execute(query, (nome_empresa, cnpj_limpo, email, senha_hash, endereco, telefone))
         conn.commit()
         return RedirectResponse(url="/login/empresa", status_code=303)
     except Exception as e:
         conn.rollback()
-        raise HTTPException(status_code=400, detail="Erro empresa.")
+        print(f"Erro empresa: {e}")
+        raise HTTPException(status_code=400, detail="Erro no cadastro da empresa.")
     finally:
         cursor.close()
         conn.close()
