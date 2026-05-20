@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Login Empresa - FootZone</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body class="login-body-page">
+    <div class="background"></div>
+    <div class="login-caixa">
+        <div class="campos">
+            <a href="/login" class="campoDesativado">Usuário</a>
+            <a href="/login/empresa" class="campoAtivo">Empresa</a>
+            <a href="/admin" class="campoDesativado">Admin</a>
+        </div>
+
+        <h2>Painel da Empresa</h2>
+
+        <form action="/login/empresa" method="post">
+            <h4>CNPJ da Empresa:</h4>
+            <input type="text" name="cnpj" oninput="mascaraCNPJ(this)" placeholder="00.000.000/0000-00" required>
+
+            <h4>Telefone de Contato:</h4>
+            <input type="text" name="telefone" oninput="mascaraTelefone(this)" placeholder="(00) 00000-0000" required>
+
+            <button type="submit">Acessar Painel</button>
+        </form>
+
+        <div style="margin-top: 15px;">
+            <p style="color: #888; font-size: 12px;">Sua empresa não está cadastrada? <a href="/empresa" style="color: #d4af37; text-decoration: none;">Registre-se aqui</a></p>
+        </div>
+    </div>
+    <script src="{{ url_for('static', path='/script.js') }}"></script>
+</body>
+</html>

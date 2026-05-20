@@ -45,11 +45,12 @@ CREATE TABLE empresa (
     id_empresa INT AUTO_INCREMENT PRIMARY KEY,
     nome_empresa VARCHAR(150) NOT NULL,
     cnpj CHAR(14) NOT NULL UNIQUE,
+    email VARCHAR(150) NOT NULL UNIQUE, -- Adicionado para Login
+    senha_hash VARCHAR(255) NOT NULL,    -- Adicionado para Segurança
     endereco VARCHAR(255),
     telefone VARCHAR(20),
-    email_admin VARCHAR(150), -- Coluna que guardará o email do admin
+    email_admin VARCHAR(150), 
     
-    -- Definindo a chave estrangeira corretamente
     CONSTRAINT fk_empresa_admin 
     FOREIGN KEY (email_admin) REFERENCES admin(email) 
     ON DELETE SET NULL
@@ -188,8 +189,8 @@ INSERT INTO admin (email, chave_acesso, departamento)
 VALUES ('admin@footzone.com', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 'ADMIN');
 
 -- Empresa
-INSERT INTO empresa (nome_empresa, cnpj, endereco, telefone, email_admin) 
-VALUES ('Nike Store', '12345678000199', 'Av Central, 500', '1133334444', 'admin@footzone.com');
+INSERT INTO empresa (nome_empresa, cnpj, email, senha_hash, endereco, telefone) 
+VALUES ('Nike Store', '12345678000199', 'contato@nike.com', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 'Av Central, 500', '1133334444');
 
 -- Categoria
 INSERT INTO categoria (nome, descricao)

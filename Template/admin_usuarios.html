@@ -4,15 +4,6 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
     <title>Admin - Gerenciar Usuários</title>
-    <style>
-        .admin-container { margin: 100px auto; max-width: 1000px; padding: 20px; background: #111; border-radius: 10px; color: white; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; border-bottom: 1px solid #333; text-align: left; }
-        th { color: #d4af37; }
-        .btn-edit { background: #d4af37; color: black; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-        .btn-del { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-        #modalEditar { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; }
-    </style>
 </head>
 <body>
     <header>
@@ -27,7 +18,7 @@
 
     <div class="admin-container">
         <h2>Painel de Controle de Usuários</h2>
-        <table>
+        <table class="admin-table">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -45,7 +36,8 @@
                     <td>{{ user.email }}</td>
                     <td>{{ user.tipo }}</td>
                     <td>
-                        <button class="btn-edit" onclick="abrirModal('{{ user.id_usuario }}', '{{ user.nome }}', '{{ user.email }}')">Editar</button>
+                        <button class="btn-edit" onclick="abrirModal('{{ user.id_usuario|safe }}', '{{ user.nome|safe }}', '{{ user.email|safe }}')">Editar</button>
+                        
                         <form action="/admin/usuarios/deletar/{{ user.id_usuario }}" method="POST" style="display:inline;" onsubmit="return confirm('Excluir usuário?')">
                             <button type="submit" class="btn-del">Excluir</button>
                         </form>
@@ -57,18 +49,24 @@
     </div>
 
     <div id="modalEditar">
-        <div class="login-caixa" style="margin: 10% auto;">
+        <div class="login-caixa modal-content">
             <h2 style="color:#d4af37">Editar Cadastro</h2>
             <form action="/admin/usuarios/editar" method="post">
                 <input type="hidden" name="id_usuario" id="edit_id">
-                <input type="text" name="nome" id="edit_nome" placeholder="Nome" required>
-                <input type="email" name="email" id="edit_email" placeholder="E-mail" required>
-                <button type="submit">Salvar</button>
-                <button type="button" onclick="fecharModal()" style="background:#444; margin-top:10px;">Cancelar</button>
+                
+                <h4 style="text-align: left; color: white;">Nome:</h4>
+                <input type="text" name="nome" id="edit_nome" oninput="MascaraNome(this)" required>
+                
+                <h4 style="text-align: left; color: white;">E-mail:</h4>
+                <input type="email" name="email" id="edit_email" oninput="mascaraEmail(this)" required>
+                
+                <button type="submit">Salvar Alterações</button>
+                <button type="button" onclick="fecharModal()" style="background:#444; color: white; margin-top:10px;">Cancelar</button>
             </form>
         </div>
     </div>
 
+    <script src="{{ url_for('static', path='/script.js') }}"></script>
     <script>
         function abrirModal(id, nome, email) {
             document.getElementById('edit_id').value = id;
@@ -76,7 +74,9 @@
             document.getElementById('edit_email').value = email;
             document.getElementById('modalEditar').style.display = 'block';
         }
-        function fecharModal() { document.getElementById('modalEditar').style.display = 'none'; }
+        function fecharModal() { 
+            document.getElementById('modalEditar').style.display = 'none'; 
+        }
     </script>
 </body>
 </html>
