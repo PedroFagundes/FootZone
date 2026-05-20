@@ -1,7 +1,7 @@
 import os
 import hashlib
 import uvicorn
-from fastapi import FastAPI, Request, Form, HTTPException, Depends
+from fastapi import FastAPI, Request, Form, HTTPException, Depends, File, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -164,7 +164,7 @@ async def logout():
     response.delete_cookie("admin_logado")
     return response
 
-# Rota para exibir o perfil do usuário (CORRIGIDA COM BUFFER)
+# Rota para exibir o perfil do usuário
 @app.get("/perfil", response_class=HTMLResponse)
 async def page_perfil(request: Request, is_user: bool = Depends(usuario_logado)):
     if not is_user:
@@ -174,12 +174,10 @@ async def page_perfil(request: Request, is_user: bool = Depends(usuario_logado))
     dados_usuario = None
 
     conn = conectar_banco()
-    # ADICIONADO buffered=True para evitar conflitos de leitura residual no MySQL
     cursor = conn.cursor(dictionary=True, buffered=True)
     try:
-        # Busca todas as colunas necessárias fazendo o JOIN entre as duas tabelas pelo nome guardado no cookie
         query = """
-            SELECT u.id_usuario, u.nome, u.email, u.cpf, u.telefone 
+            SELECT u.id_usuario, u.nome, u.email, u.cpf, u.telefone, u.avatar 
             FROM usuario u
             INNER JOIN cliente c ON u.id_usuario = c.id_usuario
             WHERE u.nome = %s
@@ -201,21 +199,21 @@ async def page_perfil(request: Request, is_user: bool = Depends(usuario_logado))
         context={"usuario": usuario_nome, "dados_usuario": dados_usuario, "logado": True}
     )
 
-# Rota para editar o perfil do usuário logado (CORREÇÃO DE BUFFER)
+# Rota para editar o perfil do usuário logado (CORRIGIDA E MANDANDO ERROS REAIS)
 @app.post("/perfil/editar")
 async def editar_perfil(
     request: Request, 
     nome: str = Form(...), 
     email: str = Form(...), 
     telefone: str = Form(...), 
-    senha: str = Form(...)
+    senha: str = Form(...),
+    avatar: UploadFile = File(None)
 ):
     usuario_antigo = get_usuario_logado(request)
     if not usuario_antigo:
         raise HTTPException(status_code=401, detail="Usuário não autenticado")
 
     conn = conectar_banco()
-    # ADICIONADO buffered=True para evitar o erro de "Unread result found"
     cursor = conn.cursor(dictionary=True, buffered=True)
     try:
         # 1. Verificar se o novo e-mail já existe para outro usuário
@@ -224,24 +222,40 @@ async def editar_perfil(
         if email_existente:
             raise HTTPException(status_code=400, detail="E-mail já está em uso por outro usuário")
 
-        # 2. Localizar o ID do usuário usando o nome do cookie
-        cursor.execute("SELECT id_usuario FROM usuario WHERE nome = %s", (usuario_antigo,))
+        # 2. Localizar o ID do usuário usando o nome do cookie original
+        cursor.execute("SELECT id_usuario, avatar FROM usuario WHERE nome = %s", (usuario_antigo,))
         user_atual = cursor.fetchone()
         if not user_atual:
-            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+            raise HTTPException(status_code=404, detail="Usuário não encontrado no banco")
         
         id_usuario = user_atual['id_usuario']
+        nome_imagem_salvar = user_atual['avatar'] if user_atual['avatar'] else 'default_avatar.png'
         senha_hash = hashlib.sha256(senha.encode()).hexdigest()
 
-        # 3. Atualizar dados na tabela 'usuario'
+        # 3. Processar o upload do Avatar fisicamente
+        if avatar and avatar.filename:
+            conteudo_arquivo = await avatar.read()
+            # Só processa se o arquivo realmente contiver dados enviados
+            if len(conteudo_arquivo) > 0:
+                extensao = os.path.splitext(avatar.filename)[1].lower()
+                nome_imagem_salvar = f"avatar_{id_usuario}{extensao}"
+                
+                pasta_imagens = os.path.join(BASE_DIR, "..", "Imagens")
+                os.makedirs(pasta_imagens, exist_ok=True)
+                caminho_completo = os.path.join(pasta_imagens, nome_imagem_salvar)
+                
+                with open(caminho_completo, "wb") as f:
+                    f.write(conteudo_arquivo)
+
+        # 4. Atualizar dados na tabela 'usuario'
         query_usuario = """
             UPDATE usuario 
-            SET nome = %s, email = %s, telefone = %s, senha_hash = %s 
+            SET nome = %s, email = %s, telefone = %s, senha_hash = %s, avatar = %s 
             WHERE id_usuario = %s
         """
-        cursor.execute(query_usuario, (nome, email, telefone, senha_hash, id_usuario))
+        cursor.execute(query_usuario, (nome, email, telefone, senha_hash, nome_imagem_salvar, id_usuario))
 
-        # 4. Atualizar o telefone na tabela 'cliente'
+        # 5. Atualizar o telefone na tabela 'cliente'
         query_cliente = """
             UPDATE cliente 
             SET telefone = %s 
@@ -252,14 +266,15 @@ async def editar_perfil(
         conn.commit()
     except Exception as e:
         conn.rollback()
-        print(f"Erro ao atualizar perfil: {e}")
-        raise HTTPException(status_code=400, detail="Erro ao atualizar perfil. Verifique os dados.")
+        print(f"ERRO CRÍTICO NO BANCO: {str(e)}")
+        # RETORNA O ERRO REAL NA TELA PARA VOCÊ SABER SE CAIU NO TRY/EXCEPT
+        raise HTTPException(status_code=400, detail=f"Erro interno ao salvar dados: {str(e)}")
     finally:
         cursor.close()
         conn.close()
 
     response = RedirectResponse(url="/perfil", status_code=303)
-    response.set_cookie(key="usuario_nome", value=nome)
+    response.set_cookie(key="usuario_nome", value=nome) # Atualiza o cookie com o novo nome
     return response
 
 if __name__ == "__main__":

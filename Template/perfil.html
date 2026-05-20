@@ -10,10 +10,11 @@
 
     <style>
         .admin-container {
-            /* Alterado de 100px para 40px para subir a tabela na tela */
-            margin: 40px auto; 
+            /* AJUSTADO: Aumentado para 190px para empurrar o bloco totalmente para fora do header fixo */
+            margin: 190px auto 40px auto; 
             max-width: 700px;
             padding: 30px;
+            padding-top: 40px; /* Garante um espaço extra seguro no topo interno da caixa */
             background: #111;
             border-radius: 10px;
             color: white;
@@ -26,6 +27,55 @@
             text-align: center;
         }
 
+        /* --- ESTILOS EXCLUSIVOS DO AVATAR NO CSS INTERNO --- */
+        .avatar-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+            gap: 15px;
+        }
+
+        #avatar-pic {
+            width: 120px !important;
+            height: 120px !important;
+            border-radius: 50% !important;
+            object-fit: cover !important;
+            border: 3px solid #d4af37 !important;
+            display: block;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        /* Esconde o "Choose File" padrão do navegador */
+        .avatar-file-input {
+            display: none;
+        }
+
+        /* Estiliza a label para se comportar como o novo botão dourado */
+        .avatar-label-btn {
+            display: inline-block;
+            font-size: 14px;
+            font-weight: bold;
+            background: #d4af37;
+            color: #111;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.1s ease;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .avatar-label-btn:hover {
+            background: #c49b2d;
+        }
+
+        .avatar-label-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* --- ESTRUTURA DA TABELA E CAMPOS --- */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -55,7 +105,6 @@
             border-color: #d4af37;
         }
 
-        /* Estilo para campos que não podem ser editados (CPF) */
         input[readonly] {
             background: #1a1a1a;
             color: #888;
@@ -119,7 +168,21 @@
 
         <h2>Editar Perfil</h2>
 
-        <form action="/perfil/editar" method="post">
+        <form action="/perfil/editar" method="post" enctype="multipart/form-data">
+
+            <div class="avatar-wrapper">
+                {% if dados_usuario.avatar %}
+                    <img src="/Imagens/{{ dados_usuario.avatar }}" alt="Avatar" id="avatar-pic">
+                {% else %}
+                    <img src="/Imagens/default_avatar.png" alt="Avatar" id="avatar-pic">
+                {% endif %}
+                
+                <input type="file" id="avatar" name="avatar" accept="image/*" class="avatar-file-input">
+                
+                <label for="avatar" class="avatar-label-btn">
+                    Selecionar Avatar
+                </label>
+            </div>
 
             <table>
 
@@ -158,12 +221,11 @@
                         <label for="cpf">CPF</label>
                     </td>
                     <td>
-                        <!-- CPF enviado como readonly por segurança -->
                         <input 
                             type="text" 
                             id="cpf" 
                             name="cpf" 
-                            value="{{ dados_usuario.cpf[0:3] }}.{{ dados_usuario.cpf[3:6] }}.{{ dados_usuario.cpf[6:9] }}-{{ dados_usuario.cpf[9:12] }}"
+                            value="{{ dados_usuario.cpf[0:3] }}.{{ dados_usuario.cpf[3:6] }}.{{ dados_usuario.cpf[6:9] }}-{{ dados_usuario.cpf[9:12] }}" 
                             readonly
                         >
                     </td>

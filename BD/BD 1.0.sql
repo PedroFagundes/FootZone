@@ -250,3 +250,15 @@ SELECT * FROM item_carrinho;
 SELECT * FROM pedido;
 SELECT * FROM item_pedido;
 SELECT * FROM avaliacao;
+
+-- 1. Desativa temporariamente o modo de atualização segura
+SET SQL_SAFE_UPDATES = 0;
+
+-- 2. CRIA a coluna 'avatar' na tabela usuario (já com o valor padrão)
+ALTER TABLE usuario ADD COLUMN avatar VARCHAR(255) DEFAULT 'default_avatar.png';
+
+-- 3. Por garantia, atualiza qualquer registro antigo que possa ter ficado nulo
+UPDATE usuario SET avatar = 'default_avatar.png' WHERE avatar IS NULL OR avatar = '';
+
+-- 4. Reativa o modo de segurança do MySQL
+SET SQL_SAFE_UPDATES = 1;
