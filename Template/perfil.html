@@ -12,7 +12,7 @@
         .admin-container {
             /* AJUSTADO: Aumentado para 190px para empurrar o bloco totalmente para fora do header fixo */
             margin: 190px auto 40px auto; 
-            max-width: 700px;
+            max-width: 1500px;
             padding: 30px;
             padding-top: 40px; /* Garante um espaço extra seguro no topo interno da caixa */
             background: #111;
@@ -77,7 +77,7 @@
 
         /* --- ESTRUTURA DA TABELA E CAMPOS --- */
         table {
-            width: 100%;
+            width: 700px;
             border-collapse: collapse;
         }
 
@@ -91,7 +91,7 @@
         }
 
         input {
-            width: 100%;
+            width: 600px;
             padding: 12px;
             border: 1px solid #333;
             border-radius: 6px;
@@ -202,13 +202,11 @@
                         <label for="nome">Nome</label>
                     </td>
                     <td>
-                        <input 
-                            type="text" 
-                            id="nome" 
-                            name="nome" 
-                            value="{{ dados_usuario.nome }}" 
-                            required
-                        >
+                        <span class="obrigatorio"></span>
+                        
+                        <input type="text" id="nome" name="nome" oninput="MascaraNome(this)" required value="{{ dados_usuario.nome }}" >
+                        <span id="erro-nome" class="erro"></span>
+                        
                     </td>
                 </tr>
 
@@ -217,13 +215,11 @@
                         <label for="email">E-mail</label>
                     </td>
                     <td>
-                        <input 
-                            type="email" 
-                            id="email" 
-                            name="email" 
-                            value="{{ dados_usuario.email }}" 
-                            required
-                        >
+                       
+                       <span class="obrigatorio"> </span>
+                    </label>
+                    <input type="email" name="email" id="email" oninput="mascaraEmail(this)" required value="{{ dados_usuario.email }}">
+                    <span id="erro-email" class="erro"></span>
                     </td>
                 </tr>
 
@@ -247,12 +243,11 @@
                         <label for="telefone">Telefone</label>
                     </td>
                     <td>
-                        <input 
-                            type="text" 
-                            id="telefone" 
-                            name="telefone" 
-                            value="{{ dados_usuario.telefone }}" 
-                        >
+                        
+                        <span class="obrigatorio"></span>
+                    </label>
+                    <input type="text" name="telefone" id="telefone" oninput="mascaraTelefone(this)"  required value="{{ dados_usuario.telefone}}">
+                    <span id="erro-telefone" class="erro"></span>
                     </td>
                 </tr>
 
@@ -261,13 +256,22 @@
                         <label for="senha">Nova Senha</label>
                     </td>
                     <td>
-                        <input 
-                            type="password" 
-                            id="senha" 
-                            name="senha" 
-                            placeholder="Digite sua senha atual ou uma nova"
-                            required
-                        >
+
+                    
+                     <span class="obrigatorio"></span>
+                       </label >
+                <div class="campo-senha">
+                    <input type="password" name="senha" id="senha" oninput="senhaForte(this)" required
+                    placeholder="Digite a sua senha atual ou uma nova senha">
+                    <span class="toggle-senha" onclick="toggleSenha()" id="btnSenha">
+           
+                        <!-- Ícone de alternar visibilidade da senha -->
+                        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#d4af37">
+                            <path d="M480.2-192q-148.2 0-264.7-80.5T48-480q51-127 167.3-207.5Q331.6-768 479.8-768t264.7 80.5Q861-607 912-480q-51 127-167.3 207.5Q628.4-192 480.2-192ZM181-130q-43.04-27.14-77.02-61.07T48-267l64-34q17 32 47 61t65 51l-43 59Zm299-134q115.38 0 209.69-58T833-480q-49-100-143.31-158T480-696q-115.38 0-209.69 58T127-480q49 100 143.31 158T480-264ZM246-96l43-61q35.07 13.71 74.03 22.86Q402-125 444-122.3V-50q-56-4-105.5-16T246-96Zm234-216q70 0 119-49t49-119q0-70-49-119t-119-49q-70 0-119 49t-49 119q0 70 49 119t119 49Zm0-72q-40 0-68-28t-28-68q0-40 28-68t68-28q40 0 68 28t28 68q0 40-28 68t-68 28Zm36 334v-72q42-2 80.97-11.14Q635.93-142.29 671-156l43 60q-44 19-93 30.5T516-50Zm263-80-43-59q38-24 66.5-52t45.5-60l64 34q-22 42-55.98 75.93Q822.04-157.14 779-130ZM480-480Z"/>
+                        </svg>
+                    </span>
+                </div>
+                <span id="erro-senha" class="erro"></span>
                     </td>
                 </tr>
 
@@ -290,6 +294,6 @@
         </form>
 
     </div>
-
+    <script src="{{ url_for('static', path='/script.js') }}"></script>
 </body>
 </html>
