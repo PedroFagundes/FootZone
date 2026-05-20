@@ -26,6 +26,8 @@ CREATE TABLE usuario (
     id_usuario INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
+    cpf VARCHAR(11) NOT NULL UNIQUE,
+    telefone VARCHAR(20),
     senha_hash VARCHAR(255) NOT NULL,
     data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -165,16 +167,16 @@ CREATE TABLE avaliacao (
 -- =====================
 
 -- Usuario (cliente)
-INSERT INTO usuario (nome, email, senha_hash)
-VALUES ('João Silva', 'joao@email.com', 'hash123');
+INSERT INTO usuario (nome, email, cpf, telefone, senha_hash)
+VALUES ('João Silva', 'joao@email.com', '12345678901','11999999999', 'hash123');
 
 -- Cliente
 INSERT INTO cliente (id_usuario, cpf, telefone, endereco)
 VALUES (1, '12345678901', '11999999999', 'Rua A, 123');
 
 -- Usuario (admin)
-INSERT INTO usuario (nome, email, senha_hash)
-VALUES ('Admin Master', 'admin@email.com', 'hashadmin');
+INSERT INTO usuario (nome, email, cpf, telefone, senha_hash)
+VALUES ('TESTE', 'teste@teste.com','11111111111','11111111111', 'hashadmin');
 
 -- Admin
 INSERT INTO admin (email, chave_acesso, departamento)

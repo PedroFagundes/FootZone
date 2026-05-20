@@ -10,7 +10,8 @@
 
     <style>
         .admin-container {
-            margin: 100px auto;
+            /* Alterado de 100px para 40px para subir a tabela na tela */
+            margin: 40px auto; 
             max-width: 700px;
             padding: 30px;
             background: #111;
@@ -52,6 +53,14 @@
         input:focus {
             outline: none;
             border-color: #d4af37;
+        }
+
+        /* Estilo para campos que não podem ser editados (CPF) */
+        input[readonly] {
+            background: #1a1a1a;
+            color: #888;
+            border-color: #222;
+            cursor: not-allowed;
         }
 
         .botoes {
@@ -118,13 +127,12 @@
                     <td>
                         <label for="nome">Nome</label>
                     </td>
-
                     <td>
                         <input 
                             type="text" 
                             id="nome" 
                             name="nome" 
-                            value="{{ usuario }}" 
+                            value="{{ dados_usuario.nome }}" 
                             required
                         >
                     </td>
@@ -134,12 +142,12 @@
                     <td>
                         <label for="email">E-mail</label>
                     </td>
-
                     <td>
                         <input 
                             type="email" 
                             id="email" 
                             name="email" 
+                            value="{{ dados_usuario.email }}" 
                             required
                         >
                     </td>
@@ -147,14 +155,44 @@
 
                 <tr>
                     <td>
-                        <label for="senha">Senha</label>
+                        <label for="cpf">CPF</label>
                     </td>
+                    <td>
+                        <!-- CPF enviado como readonly por segurança -->
+                        <input 
+                            type="text" 
+                            id="cpf" 
+                            name="cpf" 
+                            value="{{ dados_usuario.cpf[0:3] }}.{{ dados_usuario.cpf[3:6] }}.{{ dados_usuario.cpf[6:9] }}-{{ dados_usuario.cpf[9:12] }}"
+                            readonly
+                        >
+                    </td>
+                </tr>
 
+                <tr>
+                    <td>
+                        <label for="telefone">Telefone</label>
+                    </td>
+                    <td>
+                        <input 
+                            type="text" 
+                            id="telefone" 
+                            name="telefone" 
+                            value="{{ dados_usuario.telefone }}" 
+                        >
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <label for="senha">Nova Senha</label>
+                    </td>
                     <td>
                         <input 
                             type="password" 
                             id="senha" 
                             name="senha" 
+                            placeholder="Digite sua senha atual ou uma nova"
                             required
                         >
                     </td>

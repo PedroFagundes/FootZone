@@ -110,23 +110,51 @@ async def login_admin(email: str = Form(...), chave: str = Form(...)):
     
     raise HTTPException(status_code=401, detail="E-mail ou Chave incorretos")
 
-#Cadastro de usuário: CREATE
+
+#Cadastro de usuário: CREATE (CORRIGIDO)
 @app.post("/cadastrar/usuario")
-async def cadastrar_usuario(nome: str = Form(...), email: str = Form(...), cpf: str = Form(...), telefone: str = Form(...), senha: str = Form(...)):
+async def cadastrar_usuario(
+    nome: str = Form(...), 
+    email: str = Form(...), 
+    cpf: str = Form(...), 
+    telefone: str = Form(...), 
+    senha: str = Form(...)
+):
     conn = conectar_banco()
     cursor = conn.cursor()
     try:
         senha_hash = hashlib.sha256(senha.encode()).hexdigest()
-        cursor.execute("INSERT INTO usuario (nome, email, senha_hash) VALUES (%s, %s, %s)", (nome, email, senha_hash))
+        
+        # Limpa o CPF para deixar apenas números (ex: '123.456.789-00' vira '12345678900')
+        cpf_limpo = ''.join(filter(str.isdigit, cpf))
+        
+        # 1. Inseri na tabela 'usuario' passando o CPF e Telefone exigidos pelo NOT NULL
+        query_usuario = """
+            INSERT INTO usuario (nome, email, cpf, telefone, senha_hash) 
+            VALUES (%s, %s, %s, %s, %s)
+        """
+        cursor.execute(query_usuario, (nome, email, cpf_limpo, telefone, senha_hash))
+        
+        # Recupera o ID gerado para o usuário
         id_novo = cursor.lastrowid
-        cursor.execute("INSERT INTO cliente (id_usuario, cpf, telefone) VALUES (%s, %s, %s)", (id_novo, ''.join(filter(str.isdigit, cpf)), telefone))
+        
+        # 2. Inseri na tabela 'cliente' vinculando ao ID do usuário criado
+        query_cliente = """
+            INSERT INTO cliente (id_usuario, cpf, telefone) 
+            VALUES (%s, %s, %s)
+        """
+        cursor.execute(query_cliente, (id_novo, cpf_limpo, telefone))
+        
         conn.commit()
     except Exception as e:
         conn.rollback()
-        raise HTTPException(status_code=400, detail="Erro ao cadastrar")
+        #erro detalhado para facilitar o debug, mas a mensagem genérica é enviada ao cliente para não expor detalhes sensíveis do banco
+        print(f"Erro detalhado do Banco: {e}") 
+        raise HTTPException(status_code=400, detail="Erro ao cadastrar. Verifique os dados (Email ou CPF já podem existir).")
     finally:
         cursor.close()
         conn.close()
+        
     return RedirectResponse(url="/login", status_code=303)
 
 @app.get("/logout")
@@ -136,40 +164,96 @@ async def logout():
     response.delete_cookie("admin_logado")
     return response
 
-# Rota para exibir o perfil do usuário
+# Rota para exibir o perfil do usuário (CORRIGIDA COM BUFFER)
 @app.get("/perfil", response_class=HTMLResponse)
 async def page_perfil(request: Request, is_user: bool = Depends(usuario_logado)):
     if not is_user:
         return RedirectResponse("/login")
-    usuario = get_usuario_logado(request)
-    return templates.TemplateResponse(request=request, name="perfil.html", context={"usuario": usuario, "logado": True})
+    
+    usuario_nome = get_usuario_logado(request)
+    dados_usuario = None
 
-# Rota para editar o perfil do usuário logado
+    conn = conectar_banco()
+    # ADICIONADO buffered=True para evitar conflitos de leitura residual no MySQL
+    cursor = conn.cursor(dictionary=True, buffered=True)
+    try:
+        # Busca todas as colunas necessárias fazendo o JOIN entre as duas tabelas pelo nome guardado no cookie
+        query = """
+            SELECT u.id_usuario, u.nome, u.email, u.cpf, u.telefone 
+            FROM usuario u
+            INNER JOIN cliente c ON u.id_usuario = c.id_usuario
+            WHERE u.nome = %s
+        """
+        cursor.execute(query, (usuario_nome,))
+        dados_usuario = cursor.fetchone()
+    except Exception as e:
+        print(f"Erro ao buscar dados do perfil: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
+    if not dados_usuario:
+        return RedirectResponse("/logout")
+
+    return templates.TemplateResponse(
+        request=request, 
+        name="perfil.html", 
+        context={"usuario": usuario_nome, "dados_usuario": dados_usuario, "logado": True}
+    )
+
+# Rota para editar o perfil do usuário logado (CORREÇÃO DE BUFFER)
 @app.post("/perfil/editar")
-async def editar_perfil(request: Request, nome: str = Form(...), email: str = Form(...), senha: str = Form(...)):
-    usuario = get_usuario_logado(request)
-    if not usuario:
+async def editar_perfil(
+    request: Request, 
+    nome: str = Form(...), 
+    email: str = Form(...), 
+    telefone: str = Form(...), 
+    senha: str = Form(...)
+):
+    usuario_antigo = get_usuario_logado(request)
+    if not usuario_antigo:
         raise HTTPException(status_code=401, detail="Usuário não autenticado")
 
     conn = conectar_banco()
-    cursor = conn.cursor()
+    # ADICIONADO buffered=True para evitar o erro de "Unread result found"
+    cursor = conn.cursor(dictionary=True, buffered=True)
     try:
-        # Verificar se o e-mail já existe para outro usuário
-        cursor.execute("SELECT id_usuario FROM usuario WHERE email = %s AND nome != %s", (email, usuario))
+        # 1. Verificar se o novo e-mail já existe para outro usuário
+        cursor.execute("SELECT id_usuario FROM usuario WHERE email = %s AND nome != %s", (email, usuario_antigo))
         email_existente = cursor.fetchone()
         if email_existente:
             raise HTTPException(status_code=400, detail="E-mail já está em uso por outro usuário")
 
-        # Atualizar os dados do usuário
+        # 2. Localizar o ID do usuário usando o nome do cookie
+        cursor.execute("SELECT id_usuario FROM usuario WHERE nome = %s", (usuario_antigo,))
+        user_atual = cursor.fetchone()
+        if not user_atual:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+        
+        id_usuario = user_atual['id_usuario']
         senha_hash = hashlib.sha256(senha.encode()).hexdigest()
-        cursor.execute(
-            "UPDATE usuario SET nome = %s, email = %s, senha_hash = %s WHERE nome = %s",
-            (nome, email, senha_hash, usuario)
-        )
+
+        # 3. Atualizar dados na tabela 'usuario'
+        query_usuario = """
+            UPDATE usuario 
+            SET nome = %s, email = %s, telefone = %s, senha_hash = %s 
+            WHERE id_usuario = %s
+        """
+        cursor.execute(query_usuario, (nome, email, telefone, senha_hash, id_usuario))
+
+        # 4. Atualizar o telefone na tabela 'cliente'
+        query_cliente = """
+            UPDATE cliente 
+            SET telefone = %s 
+            WHERE id_usuario = %s
+        """
+        cursor.execute(query_cliente, (telefone, id_usuario))
+
         conn.commit()
     except Exception as e:
         conn.rollback()
-        raise HTTPException(status_code=400, detail=f"Erro ao atualizar perfil: {str(e)}")
+        print(f"Erro ao atualizar perfil: {e}")
+        raise HTTPException(status_code=400, detail="Erro ao atualizar perfil. Verifique os dados.")
     finally:
         cursor.close()
         conn.close()
