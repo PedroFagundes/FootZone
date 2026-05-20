@@ -1,255 +1,13 @@
+/* --- CONFIGURAÇÕES GERAIS --- */
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
 }
 
-/* FUNDO */
 body {
-  height: 800px;
-  background: #0a0a0a;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-/* LOGO DE FUNDO */
-.background {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: url("../Imagens/logo.png") repeat center;
-  background-size:50%;
-  opacity: 0.08;
-}
-
-/* CAIXA */
-.login-caixa {
-  position: relative;
-  background: #111;
-  padding: 20px;
-  border-radius: 10px;
-  width: 300px;
-  text-align: center;
-}
-
-/* campos */
-.campos {
-  display: flex;
-  margin-bottom: 20px;
-}
-
-/* TODOS IGUAIS */
-.campos a {
-  flex: 1;
-  padding: 10px;
-  text-align: center;        
-  text-decoration: none;  
-  border-radius: 7px;  
-}
-
-/* DESATIVADO */
-.campoDesativado {
-  color: #aaa;
-  background: transparent;
-}
-
-/* ATIVO */
-.campoAtivo {
-  color: #d4af37;
-  border-bottom: 2px solid #d4af37;
-  background: transparent;
-}
-
-/* TEXTO */
-h2 {
-  color: white;
-  margin-bottom: 20px;
-}
-
-/* INPUTS */
-input {
-  width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  border: 1px solid white;
-  background: #1c1c1c;
-  color: white;
-  border-radius: 10px;
-}
-
-input:focus {
-  border: 2px solid #d4af37;
-  outline: none; 
-}
-
-/* BOTÃO PADRÃO */
-button {
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  border: none;
-  background: #d4af37;
-  color: black;
-  cursor: pointer;
-  border-radius: 5px;
-}
-
-/* Barra de navegação */
-header {
-  position: fixed;   
-  top: 0;            
-  width: 100%;       
-  z-index: 1000; 
-}
-
-.navbar {
-  background-color: #000000;
-  color: #aaa;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
-}
-
-.logo img {
-  height: 50px;
-  width: auto;
-}
-
-.nav-links {
-  list-style: none;
-  display: flex;
-  gap: 2.0rem;
-  align-items: center;
-}
-
-/* LINKS NORMAIS */
-.nav-links a {
-  color: #aaa;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.3s;
-}
-
-.nav-links a:hover {
-  color: #d4af37;
-}
-
-.nav-links a.btn-login {
-  background-color: #d4af37;
-  color: white;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: bold;
-  display: inline-block;
-  transition: 0.3s;
-}
-
-.nav-links a.btn-login:hover {
-  background-color: #b8962e;
-  color: white;
-}
-
-/* TEXTO */
-h4 {
-  color: white;
-  margin-top: 15px;
-  text-align: left;
-}
-
-/* campo errado */
-.obrigatorio {
-  color: red;
-  font-size: 0.8rem;
-}
-
-input {
-    border: 1px solid #ccc;
-    padding: 8px;
-    margin-bottom: 10px;
-    width: 100%;
-}
-
-input:focus {
-    outline: none;
-    border-color: #d4af37;
-}
-
-input[style*="border-color: red"] {
-    border-color: red !important;
-}
-
-.erro {
-    color: red;
-    font-size: 12px;
-    margin-top: -8px;
-    margin-bottom: 10px;
-    display: block;
-}
-
-.campo-senha {
-    display: flex;
-    align-items: center;
-}
-
-.toggle-senha {
-    cursor: pointer;
-    margin-left: 10px;
-}
-/* visualizar senha */
-.campo-senha {
-  position: relative;
-  width: 100%;
-}
-
-.campo-senha input {
-  width: 100%;
-  padding-right: 35px; 
-}
-
-.toggle-senha {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
-  font-size: 16px;
-  user-select: none;
-}
-
-/* VITRINE */
-.vitrine {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.produto-card {
-  background: #111;
-  border: 1px solid #333;
-  border-radius: 10px;
-  padding: 15px;
-  text-align: center;
-}
-
-.produto-card img {
-  width: 100%;
-  border-radius: 8px;
-}
-
-.preco {
-  color: #d4af37;
-  font-weight: bold;
-  font-size: 1.2rem;
-}
-.login-body-page {
-    height: 100vh;
-    width: 100vw;
+    min-height: 100vh;
     background: #0a0a0a;
     display: flex;
     justify-content: center;
@@ -257,37 +15,258 @@ input[style*="border-color: red"] {
     margin: 0;
 }
 
-.info {
-  color: white;
+/* LOGO DE FUNDO (Efeito de marca d'água) */
+.background {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: url("../Imagens/logo.png") repeat center;
+    background-size: 50%;
+    opacity: 0.08;
+    z-index: -1;
+}
+
+/* --- COMPONENTES DE LOGIN E CADASTRO --- */
+.login-body-page {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-caixa {
+    position: relative;
+    background: #111;
+    padding: 25px;
+    border-radius: 10px;
+    width: 320px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+/* ABAS DE NAVEGAÇÃO (Transição entre Usuário/Empresa/Admin) */
+.campos {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+}
+
+.campos a {
+    flex: 1;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 14px;
+    padding: 10px;
+    border-radius: 5px;
+    transition: 0.3s;
+}
+
+.campoDesativado {
+    color: #888;
+    background: transparent;
+}
+
+.campoDesativado:hover {
+    color: #d4af37;
+}
+
+.campoAtivo {
+    color: #000 !important;
+    background: #d4af37;
+}
+
+/* --- FORMULÁRIOS E INPUTS --- */
+h2 { color: white; margin-bottom: 20px; }
+h4 { color: white; margin-top: 15px; text-align: left; }
+.obrigatorio { color: red; font-size: 0.8rem; }
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #333;
+    background: #1c1c1c;
+    color: white;
+    border-radius: 8px;
+    transition: 0.3s;
+}
+
+input:focus {
+    border-color: #d4af37;
+    outline: none;
+    box-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
+}
+
+.erro {
+    color: #ff4d4d;
+    font-size: 12px;
+    text-align: left;
+    display: block;
+    margin-top: -5px;
+    margin-bottom: 10px;
+}
+
+/* CAMPO DE SENHA COM ÍCONE */
+.campo-senha {
+    position: relative;
+    width: 100%;
+}
+
+.campo-senha input {
+    padding-right: 40px;
+}
+
+.toggle-senha {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    z-index: 10;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+    border: none;
+    background: #d4af37;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #f1c40f;
+    transform: translateY(-2px);
+}
+
+/* --- NAVBAR FIXA --- */
+header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+}
+
+.navbar {
+    background-color: #000;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #222;
+}
+
+.logo img { height: 50px; }
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+}
+
+.nav-links a {
+    color: #aaa;
+    text-decoration: none;
+    font-weight: 500;
+    transition: 0.3s;
+}
+
+.nav-links a:hover { color: #d4af37; }
+
+/* --- VITRINE DE PRODUTOS --- */
+.vitrine {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 25px;
+    padding: 40px 20px;
+    max-width: 1200px;
+    width: 100%;
+}
+
+.produto-card {
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: 0.3s;
+}
+
+.produto-card:hover {
+    border-color: #d4af37;
+    transform: translateY(-5px);
+}
+
+.produto-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.info { color: white; }
+.preco { color: #d4af37; font-weight: bold; font-size: 1.3rem; margin: 10px 0; }
+
+/* --- ESTILOS DO PAINEL ADMIN --- */
+.admin-container { 
+    margin: 120px auto 50px auto; 
+    max-width: 1000px; 
+    padding: 30px; 
+    background: #111; 
+    border-radius: 10px; 
+    color: white;
+}
+
+.admin-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-top: 20px; 
+}
+
+.admin-table th, .admin-table td { 
+    padding: 15px; 
+    border-bottom: 1px solid #333; 
+    text-align: left; 
+}
+
+.admin-table th { color: #d4af37; text-transform: uppercase; }
+
+.btn-del { 
+    background: #ff4d4d; 
+    color: white; 
+    padding: 8px 12px;
+}
+
+.btn-del:hover { background: #cc0000; }
+
+/* MODAL ADMIN */
+#modalEditar { 
+    display:none; 
+    position:fixed; 
+    top:0; left:0; 
+    width:100%; height:100%; 
+    background:rgba(0,0,0,0.9); 
+    z-index: 9999; 
+}
+
+.modal-content {
+    margin: 10% auto; 
+    max-width: 400px;
 }
 
 /* --- RESPONSIVIDADE --- */
-
-/* Para celulares (telas menores que 600px) */
 @media (max-width: 600px) {
-    .vitrine {
-        grid-template-columns: 1fr; 
-        padding: 10px;
-    }
-
-    .navbar {
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    .nav-links {
-        gap: 10px;
-    }
-}
-
-/* Para tablets (telas entre 601px e 992px) */
-@media (min-width: 601px) and (max-width: 992px) {
-    .vitrine {
-        grid-template-columns: repeat(2, 1fr); 
-    }
-}
-
-img {
-    max-width: 100%;
-    height: auto;
+    .vitrine { grid-template-columns: 1fr; }
+    .navbar { flex-direction: column; gap: 15px; }
+    .nav-links { gap: 10px; }
+    .login-caixa { width: 90%; }
 }

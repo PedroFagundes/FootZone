@@ -1,35 +1,56 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Cadastro - Empresa - FootZone</title>
-  <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>Cadastro de Empresa - FootZone</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body>
-  <div class="background"></div>
-  <div class="login-caixa">
-    <div class="campos">
-      <a href="/usuario" class="campoDesativado">Usuário</a>
-      <a href="/empresa" class="campoAtivo">Empresa</a>
-      <a href="/admin" class="campoDesativado">Admin</a>
+<body class="login-body-page">
+    <div class="background"></div>
+    
+    <div class="login-caixa" style="width: 400px; margin-top: 50px; margin-bottom: 50px;">
+        <div class="campos">
+            <a href="/cadastro" class="campoDesativado">Usuário</a>
+            <a href="/empresa" class="campoAtivo">Empresa</a>
+        </div>
+
+        <h2>Cadastrar sua Loja</h2>
+
+        <form action="/cadastrar/empresa" method="post" id="formEmpresa">
+            <h4>Nome da Empresa:</h4>
+            <input type="text" name="nome_empresa" placeholder="Ex: Nike Store" required>
+
+            <h4>CNPJ:</h4>
+            <input type="text" name="cnpj" placeholder="00.000.000/0000-00" oninput="mascaraCNPJ(this)" required>
+
+            <h4>E-mail Corporativo:</h4>
+            <input type="email" name="email" placeholder="contato@empresa.com" oninput="mascaraEmail(this)" required>
+
+            <h4>Senha de Acesso:</h4>
+            <div class="campo-senha">
+                <input type="password" name="senha" id="senha" placeholder="Crie uma senha" required>
+                <span class="toggle-senha" onclick="toggleSenha()">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#d4af37">
+                        <path d="M480.2-192q-148.2 0-264.7-80.5T48-480q51-127 167.3-207.5Q331.6-768 479.8-768t264.7 80.5Q861-607 912-480q-51 127-167.3 207.5Q628.4-192 480.2-192Zm0-72q-40 0-68-28t-28-68q0-40 28-68t68-28q40 0 68 28t28 68q0 40-28 68t-68 28Zm0-216q-70 0-119 49t-49 119q0 70 49 119t119 49q70 0 119-49t49-119q0-70-49-119t-119-49Z"/>
+                    </svg>
+                </span>
+            </div>
+
+            <h4>Telefone:</h4>
+            <input type="text" name="telefone" placeholder="(00) 00000-0000" oninput="mascaraTelefone(this)" required>
+
+            <h4>Endereço da Sede:</h4>
+            <input type="text" name="endereco" placeholder="Rua, Número, Bairro" required>
+
+            <button type="submit">Finalizar Cadastro</button>
+        </form>
+
+        <div style="margin-top: 15px;">
+            <p style="color: #888; font-size: 12px;">Já possui parceria? <a href="/login/empresa" style="color: #d4af37; text-decoration: none;">Acesse o Painel</a></p>
+        </div>
     </div>
 
-    <h2>Cadastro de Empresa</h2>
-
-    <form action="/cadastrar/empresa" method="post">
-      <h4>Nome da Empresa:</h4>
-      <input type="text" name="nome_empresa" oninput="MascaraNome(this)" required>
-      <h4>CNPJ:</h4>
-      <input type="text" name="cnpj" placeholder="00.000.000/0000-00" required>
-      <h4>Telefone:</h4>
-      <input type="text" name="telefone" oninput="mascaraTelefone(this)" required>
-      <h4>Endereço:</h4>
-      <input type="text" name="endereco" required>
-      
-      <button type="submit">Cadastrar Empresa</button>
-    </form>
-  </div>
-  <script src="{{ url_for('static', path='/script.js') }}"></script>
+    <script src="{{ url_for('static', path='/script.js') }}"></script>
 </body>
 </html>

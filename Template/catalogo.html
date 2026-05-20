@@ -25,7 +25,7 @@
                         <img src="/Imagens/default_avatar.png" alt="Perfil" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;">
                     {% endif %}
                     
-                    {{ usuario.split(' ')[0] }}
+                    {{ usuario.split(' ')[0] if usuario else 'Visitante' }}
                 </a>
             </li>
             <li><a href="/logout">Sair</a></li>

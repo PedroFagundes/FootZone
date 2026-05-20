@@ -1,5 +1,5 @@
 import os
-from fastapi import APIRouter, Request, HTTPException, Form
+from fastapi import APIRouter, Request, HTTPException, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from db import conectar_banco
@@ -19,11 +19,12 @@ def verificar_admin(request: Request):
 async def listar_usuarios(request: Request):
     verificar_admin(request)
     
+    conn = None
     try:
         conn = conectar_banco()
         cursor = conn.cursor(dictionary=True)
         
-        # LEFT JOIN para identificar quem é Admin e quem é Cliente
+        # SQL: Busca usuários e identifica o tipo (Admin/Cliente) via LEFT JOIN
         query = """
             SELECT u.id_usuario, u.nome, u.email, 
             CASE WHEN a.email IS NOT NULL THEN 'Admin' ELSE 'Cliente' END as tipo
@@ -33,19 +34,20 @@ async def listar_usuarios(request: Request):
         cursor.execute(query)
         usuarios = cursor.fetchall()
         
-        cursor.close()
-        conn.close()
-        
         return templates.TemplateResponse("admin_usuarios.html", {
             "request": request, 
             "usuarios": usuarios,
-            "usuario_nome": request.cookies.get("usuario_nome")
+            "usuario_nome": request.cookies.get("usuario_nome"),
+            "is_admin": True
         })
     except Exception as e:
         print(f"Erro ao listar usuários: {e}")
         return HTMLResponse(content="Erro ao carregar banco de dados", status_code=500)
+    finally:
+        if conn:
+            conn.close()
 
-# --- UPDATE ---
+# --- ROTA: EDITAR USUÁRIO ---
 @router.post("/admin/usuarios/editar")
 async def editar_usuario(
     request: Request,
@@ -55,39 +57,46 @@ async def editar_usuario(
 ):
     verificar_admin(request)
     
+    conn = None
     try:
         conn = conectar_banco()
         cursor = conn.cursor()
         
-        # Atualiza os dados básicos do usuário
+        # Atualiza os dados básicos do usuário na tabela principal
         query = "UPDATE usuario SET nome = %s, email = %s WHERE id_usuario = %s"
         cursor.execute(query, (nome, email, id_usuario))
         
         conn.commit()
-        cursor.close()
-        conn.close()
     except Exception as e:
+        if conn: conn.rollback()
         print(f"Erro ao editar: {e}")
         raise HTTPException(status_code=400, detail="Erro ao atualizar usuário.")
+    finally:
+        if conn:
+            conn.close()
 
     return RedirectResponse(url="/admin/usuarios", status_code=303)
 
-# --- DELETAR USUÁRIO ---
+# --- ROTA: DELETAR USUÁRIO ---
 @router.post("/admin/usuarios/deletar/{id}")
 async def deletar_usuario(id: int, request: Request):
     verificar_admin(request)
     
+    conn = None
     try:
         conn = conectar_banco()
         cursor = conn.cursor()
         
+        # O banco está com ON DELETE CASCADE, então deletar aqui remove referências em 'cliente'
         cursor.execute("DELETE FROM usuario WHERE id_usuario = %s", (id,))
         
         conn.commit()
-        cursor.close()
-        conn.close()
     except Exception as e:
+        if conn: conn.rollback()
         print(f"Erro ao deletar: {e}")
         raise HTTPException(status_code=400, detail="Erro ao excluir usuário.")
+    finally:
+        if conn:
+            conn.close()
 
     return RedirectResponse(url="/admin/usuarios", status_code=303)
