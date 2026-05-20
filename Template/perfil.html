@@ -151,18 +151,29 @@
 
 <body>
 
-    <header>
-        <nav class="navbar">
-            <a href="/" class="logo">
-                <img src="/Imagens/logo.png" alt="Logo">
-            </a>
+<header>
+    <nav class="navbar">
+        <a href="/" class="logo">
+            <img src="/Imagens/logo.png" alt="Logo">
+        </a>
 
-            <ul class="nav-links">
-                <li><a href="/catalogo">Loja</a></li>
-                <li><a href="/logout">Sair</a></li>
-            </ul>
-        </nav>
-    </header>
+        <ul class="nav-links">
+            <li><a href="/catalogo">Loja</a></li>
+            <li>
+                <a href="/perfil" style="display: inline-flex; align-items: center; gap: 8px;">
+                    {% if dados_usuario.avatar_b64 %}
+                        <img src="data:image/jpeg;base64,{{ dados_usuario.avatar_b64 }}" alt="Perfil" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid #d4af37;">
+                    {% else %}
+                        <img src="/Imagens/default_avatar.png" alt="Perfil" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;">
+                    {% endif %}
+                    
+                    {{ usuario.split(' ')[0] }}
+                </a>
+            </li>
+            <li><a href="/logout">Sair</a></li>
+        </ul>
+    </nav>
+</header>
 
     <div class="admin-container">
 
@@ -170,19 +181,19 @@
 
         <form action="/perfil/editar" method="post" enctype="multipart/form-data">
 
-            <div class="avatar-wrapper">
-                {% if dados_usuario.avatar %}
-                    <img src="/Imagens/{{ dados_usuario.avatar }}" alt="Avatar" id="avatar-pic">
-                {% else %}
-                    <img src="/Imagens/default_avatar.png" alt="Avatar" id="avatar-pic">
-                {% endif %}
-                
-                <input type="file" id="avatar" name="avatar" accept="image/*" class="avatar-file-input">
-                
-                <label for="avatar" class="avatar-label-btn">
-                    Selecionar Avatar
-                </label>
-            </div>
+<div class="avatar-wrapper">
+    {% if dados_usuario.avatar_b64 %}
+        <img src="data:image/jpeg;base64,{{ dados_usuario.avatar_b64 }}" alt="Avatar" id="avatar-pic">
+    {% else %}
+        <img src="/Imagens/default_avatar.png" alt="Avatar" id="avatar-pic">
+    {% endif %}
+    
+    <input type="file" id="avatar" name="avatar" accept="image/*" class="avatar-file-input">
+    
+    <label for="avatar" class="avatar-label-btn">
+        Selecionar Avatar
+    </label>
+</div>
 
             <table>
 
