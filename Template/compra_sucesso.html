@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
+    <title>FootZone - Compra Realizada</title>
+</head>
+<body class="login-body-page" style="height: auto !important; min-height: 100vh !important; display: flex !important; align-items: center !important; justify-content: center !important; padding: 40px 0 !important;">
+    <div class="background"></div>
+    
+    <div class="login-caixa" style="width: 500px; padding: 40px; text-align: center;">
+        <div style="margin-bottom: 20px;">
+            <svg xmlns="http://www.w3.org/2000/svg" height="60px" viewBox="0 -960 960 960" width="60px" fill="#d4af37">
+                <path d="m424-296 282-282-56-56-226 226-114-114-56 56 170 170Zm56 216q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-72q150 0 255-105t105-255q0-150-105-255T480-808q-150 0-255 105T120-480q0 150 105 255t255 105Zm0-400Z"/>
+            </svg>
+        </div>
+
+        <h2 style="color: #d4af37; margin-bottom: 10px;">Pedido Confirmado!</h2>
+        <p style="color: #aaa; font-size: 14px; margin-bottom: 25px;">Sua compra foi processada e o produto já foi reservado.</p>
+        
+        <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 8px; padding: 20px; text-align: left; margin-bottom: 30px;">
+            <h4 style="color: #fff; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Resumo do Pedido #{{ id_pedido }}</h4>
+            <p style="color: #ddd; margin-bottom: 8px;"><strong>Produto:</strong> {{ produto_nome }}</p>
+            <p style="color: #ddd; margin-bottom: 8px;"><strong>Marca:</strong> {{ produto_marca }} | <strong>Tam:</strong> {{ produto_tamanho }}</p>
+            <p style="color: #ddd; margin-bottom: 8px;"><strong>Categoria:</strong> {{ produto_categoria }}</p>
+            <p style="color: #d4af37; font-size: 18px; margin-top: 15px; font-weight: bold;">Total: R$ {{ "{:.2f}".format(produto_preco) }}</p>
+        </div>
+
+        <a href="/catalogo" class="btn-login" style="text-decoration: none; display: block; text-align: center; width: 100%; box-sizing: border-box;">Voltar para a Loja</a>
+    </div>
+</body>
+</html>

@@ -55,12 +55,10 @@ async def page_catalogo(request: Request):
         conn = conectar_banco()
         cursor = conn.cursor(dictionary=True, buffered=True)
         
-        # CORRIGIDO: Query adaptada para buscar a nova estrutura com imagem e categoria direto na tabela produto
         query = "SELECT id_produto, nome, descricao, preco, tamanho, marca, categoria, imagem FROM produto"
         cursor.execute(query)
         produtos_brutos = cursor.fetchall()
         
-        # CORRIGIDO: Laço para converter os bytes da imagem binária para string Base64 legível no HTML do catálogo geral
         for p in produtos_brutos:
             if p['imagem']:
                 p['avatar_b64'] = base64.b64encode(p['imagem']).decode('utf-8')
@@ -212,6 +210,69 @@ async def login_empresa(cnpj: str = Form(...), senha: str = Form(...)):
         return response
         
     return RedirectResponse(url="/login/empresa?erro=1", status_code=303)
+
+@app.post("/comprar/produto/{id_produto}")
+async def comprar_produto(id_produto: int, request: Request):
+    usuario_nome = get_usuario_logado(request)
+    if not usuario_nome:
+        return RedirectResponse(url="/login", status_code=303)
+        
+    conn = None
+    try:
+        conn = conectar_banco()
+        cursor = conn.cursor(dictionary=True, buffered=True)
+        
+        # 1. Recupera o ID do cliente logado
+        cursor.execute("SELECT id_usuario FROM usuario WHERE nome = %s", (usuario_nome,))
+        user = cursor.fetchone()
+        if not user:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+        id_cliente = user['id_usuario']
+        
+        # 2. Busca todos os detalhes do produto antes de remover do banco
+        cursor.execute("SELECT nome, marca, tamanho, categoria, preco FROM produto WHERE id_produto = %s", (id_produto,))
+        produto = cursor.fetchone()
+        if not produto:
+            raise HTTPException(status_code=404, detail="Produto indisponível.")
+        
+        preco_total = produto['preco']
+        
+        # 3. Insere o registro mestre na tabela de pedidos
+        query_pedido = """
+            INSERT INTO pedido (data_pedido, status, forma_pagamento, total, id_cliente)
+            VALUES (CURRENT_TIMESTAMP, 'pago', 'pix', %s, %s)
+        """
+        cursor.execute(query_pedido, (preco_total, id_cliente))
+        id_pedido = cursor.lastrowid
+        
+        # 4. Vincula o item comprado ao histórico de faturamento
+        query_item = """
+            INSERT INTO item_pedido (id_pedido, id_produto, quantidade, preco_unitario)
+            VALUES (%s, %s, 1, %s)
+        """
+        cursor.execute(query_item, (id_pedido, id_produto, preco_total))
+        
+        # 5. Remove o produto da tabela para atualizar a vitrine em tempo real
+        cursor.execute("DELETE FROM produto WHERE id_produto = %s", (id_produto,))
+        conn.commit()
+        
+        # Retorna e renderiza a página de sucesso injetando os dados do comprovante
+        return templates.TemplateResponse("compra_sucesso.html", {
+            "request": request,
+            "id_pedido": id_pedido,
+            "produto_nome": produto['nome'],
+            "produto_marca": produto['marca'],
+            "produto_tamanho": produto['tamanho'],
+            "produto_categoria": produto['categoria'],
+            "produto_preco": preco_total
+        })
+        
+    except Exception as e:
+        if conn: conn.rollback()
+        print(f"Erro ao finalizar a compra: {e}")
+        raise HTTPException(status_code=400, detail="Não foi possível concluir o pedido.")
+    finally:
+        if conn: conn.close()
 
 @app.post("/cadastrar/usuario")
 async def cadastrar_usuario(

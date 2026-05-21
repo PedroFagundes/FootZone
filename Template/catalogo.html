@@ -48,7 +48,10 @@
                 <p style="color: #d4af37; font-size: 13px; font-weight: bold; margin-bottom: 5px;">{{ produto.categoria }}</p>
                 <p>{{ produto.marca }} | Tam: {{ produto.tamanho }}</p>
                 <p class="preco">R$ {{ "{:.2f}".format(produto.preco) }}</p>
-                <button class="btn-comprar">Comprar</button>
+                
+                <form action="/comprar/produto/{{ produto.id_produto }}" method="post" style="width: 100%;">
+                    <button type="submit" class="btn-comprar" style="width: 100%; cursor: pointer;">Comprar</button>
+                </form>
             </div>
         </div>
         {% else %}
