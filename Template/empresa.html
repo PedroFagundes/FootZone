@@ -6,13 +6,15 @@
     <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body class="login-body-page">
+<body class="login-body-page" style="height: auto !important; min-height: 100vh !important; display: flex !important; align-items: center !important; justify-content: center !important; padding: 40px 0 !important; overflow-y: auto !important;">
     <div class="background"></div>
     
-    <div class="login-caixa" style="width: 400px; margin-top: 50px; margin-bottom: 50px;">
+    <div class="login-caixa" style="width: 400px; margin: 0 auto;">
+        
         <div class="campos">
             <a href="/cadastro" class="campoDesativado">Usuário</a>
             <a href="/empresa" class="campoAtivo">Empresa</a>
+            <a href="/admin" class="campoDesativado">Admin</a>
         </div>
 
         <h2>Cadastrar sua Loja</h2>
@@ -32,7 +34,7 @@
                 <input type="password" name="senha" id="senha" placeholder="Crie uma senha" required>
                 <span class="toggle-senha" onclick="toggleSenha()">
                     <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#d4af37">
-                        <path d="M480.2-192q-148.2 0-264.7-80.5T48-480q51-127 167.3-207.5Q331.6-768 479.8-768t264.7 80.5Q861-607 912-480q-51 127-167.3 207.5Q628.4-192 480.2-192Zm0-72q-40 0-68-28t-28-68q0-40 28-68t68-28q40 0 68 28t28 68q0 40-28 68t-68 28Zm0-216q-70 0-119 49t-49 119q0 70 49 119t119 49q70 0 119-49t49-119q0-70-49-119t-119-49Z"/>
+                        <path d="M480.2-192q-148.2 0-264.7-80.5T48-480q51-127 167.3-207.5Q331.6-768 479.8-768t264.7 80.5Q861-607 912-480q-51 127-167.3 207.5Q628.4-192 480.2-192ZM181-130q-43.04-27.14-77.02-61.07T48-267l64-34q17 32 47 61t65 51l-43 59Zm299-134q115.38 0 209.69-58T833-480q-49-100-143.31-158T480-696q-115.38 0-209.69 58T127-480q49 100 143.31 158T480-264ZM246-96l43-61q35.07 13.71 74.03 22.86Q402-125 444-122.3V-50q-56-4-105.5-16T246-96Zm234-216q70 0 119-49t49-119q0-70-49-119t-119-49q-70 0-119 49t-49 119q0 70 49 119t119 49Zm0-72q-40 0-68-28t-28-68q0-40 28-68t68-28q40 0 68 28t28 68q0 40-28 68t-68 28Zm36 334v-72q42-2 80.97-11.14Q635.93-142.29 671-156l43 60q-44 19-93 30.5T516-50Zm263-80-43-59q38-24 66.5-52t45.5-60l64 34q-22 42-55.98 75.93Q822.04-157.14 779-130ZM480-480Z"/>
                     </svg>
                 </span>
             </div>

@@ -11,20 +11,19 @@ from db import conectar_banco
 app = FastAPI()
 
 # --- INTEGRAÇÃO DO ADMIN ---
+# Certifique-se de que o arquivo 'admin_users.py' está na mesma pasta que este main.py.
 try:
     from admin_users import router as admin_router 
     app.include_router(admin_router)
 except ImportError:
     print("Aviso: admin_users.py não encontrado.")
 
+print("Rotas carregadas com sucesso:", [route.path for route in app.routes])
+
 # --- CONFIGURAÇÃO DE AMBIENTE ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__)) 
-
-# Montagem de arquivos estáticos e imagens
 app.mount("/Static", StaticFiles(directory=os.path.join(BASE_DIR, "..", "Static")), name="static")
 app.mount("/Imagens", StaticFiles(directory=os.path.join(BASE_DIR, "..", "Imagens")), name="imagens")
-
-# Configuração do Jinja2
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "..", "Template"))
 
 # --- UTILITÁRIOS ---
@@ -32,12 +31,20 @@ def get_usuario_logado(request: Request):
     # Retorna o nome ou string vazia para evitar erro de 'None' no .split() do HTML
     return request.cookies.get("usuario_nome") or ""
 
+def usuario_logado(request: Request):
+    return request.cookies.get("usuario_nome") is not None
+
 # --- ROTAS DE NAVEGAÇÃO (GET) ---
 
 @app.get("/", response_class=HTMLResponse)
 @app.get("/catalogo", response_class=HTMLResponse)
 async def page_catalogo(request: Request):
-    usuario = get_usuario_logado(request)
+    usuario_nome = get_usuario_logado(request)
+    
+    # Se não houver usuário logado no cookie, barra o acesso e joga para o login
+    if not usuario_nome:
+        return RedirectResponse(url="/login", status_code=303)
+        
     produtos = []
     avatar_b64 = None 
 
@@ -45,31 +52,31 @@ async def page_catalogo(request: Request):
         conn = conectar_banco()
         cursor = conn.cursor(dictionary=True, buffered=True)
         
-        # Busca produtos e suas imagens
+        # Mantido o JOIN trazido pelo seu amigo para carregar a URL da imagem de cada produto corretamente
         query = "SELECT p.*, pi.url FROM produto p LEFT JOIN produto_imagem pi ON p.id_produto = pi.id_produto"
         cursor.execute(query)
         produtos = cursor.fetchall()
         
-        # Busca avatar se houver usuário logado
-        if usuario:
-            cursor.execute("SELECT avatar FROM usuario WHERE nome = %s", (usuario,))
-            user_data = cursor.fetchone()
-            if user_data and user_data['avatar']:
-                avatar_b64 = base64.b64encode(user_data['avatar']).decode('utf-8')
+        # Busca o avatar do usuário logado diretamente do MEDIUMBLOB
+        cursor.execute("SELECT avatar FROM usuario WHERE nome = %s", (usuario_nome,))
+        user_data = cursor.fetchone()
+        
+        if user_data and user_data['avatar']:
+            avatar_b64 = base64.b64encode(user_data['avatar']).decode('utf-8')
             
         cursor.close()
         conn.close()
     except Exception as e: 
-        print(f"Erro ao carregar catálogo: {e}")
+        print(f"Erro ao carregar o catálogo: {e}")
         
     return templates.TemplateResponse(
         request=request, 
         name="catalogo.html", 
         context={
             "produtos": produtos, 
-            "usuario": usuario, 
-            "avatar_b64": avatar_b64, 
-            "logado": usuario != ""
+            "logado": True, 
+            "usuario": usuario_nome, 
+            "avatar_b64": avatar_b64
         }
     )
 
@@ -90,29 +97,51 @@ async def page_empresa(request: Request):
     return templates.TemplateResponse(request=request, name="empresa.html", context={})
 
 @app.get("/admin", response_class=HTMLResponse)
-async def page_admin(request: Request):
+async def page_admin_login(request: Request):
     return templates.TemplateResponse(request=request, name="admin.html", context={})
 
 @app.get("/perfil", response_class=HTMLResponse)
 async def page_perfil(request: Request):
     usuario_nome = get_usuario_logado(request)
     if not usuario_nome:
-        return RedirectResponse(url="/login")
+        return RedirectResponse(url="/login", status_code=303)
     
     dados_usuario = None
     try:
         conn = conectar_banco()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM usuario WHERE nome = %s", (usuario_nome,))
+        cursor = conn.cursor(dictionary=True, buffered=True)
+        query = """
+            SELECT u.id_usuario, u.nome, u.email, u.cpf, u.telefone, u.avatar 
+            FROM usuario u
+            INNER JOIN cliente c ON u.id_usuario = c.id_usuario
+            WHERE u.nome = %s
+        """
+        cursor.execute(query, (usuario_nome,))
         dados_usuario = cursor.fetchone()
-        if dados_usuario and dados_usuario['avatar']:
-            dados_usuario['avatar_b64'] = base64.b64encode(dados_usuario['avatar']).decode('utf-8')
+        
+        if dados_usuario:
+            if dados_usuario['avatar'] and len(dados_usuario['avatar']) > 0:
+                dados_usuario['avatar_b64'] = base64.b64encode(dados_usuario['avatar']).decode('utf-8')
+            else:
+                dados_usuario['avatar_b64'] = None
+                
         cursor.close()
         conn.close()
     except Exception as e:
         print(f"Erro perfil: {e}")
 
-    return templates.TemplateResponse(request=request, name="perfil.html", context={"usuario": usuario_nome, "dados_usuario": dados_usuario, "logado": True})
+    if not dados_usuario:
+        return RedirectResponse(url="/logout", status_code=303)
+
+    return templates.TemplateResponse(
+        request=request, 
+        name="perfil.html", 
+        context={
+            "usuario": usuario_nome, 
+            "dados_usuario": dados_usuario, 
+            "logado": True
+        }
+    )
 
 # --- PROCESSAMENTO DE DADOS (POST) ---
 
@@ -125,32 +154,77 @@ async def login_usuario(email: str = Form(...), senha: str = Form(...)):
     user = cursor.fetchone()
     cursor.close()
     conn.close()
-
+    
     if user:
         response = RedirectResponse(url="/catalogo", status_code=303)
-        response.set_cookie(key="usuario_nome", value=user['nome'])
+        # Session Cookie seguro: Não salva em disco rígido e apaga quando o navegador fecha
+        response.set_cookie(key="usuario_nome", value=user['nome'], httponly=True, path="/")
         return response
     return RedirectResponse(url="/login?erro=1", status_code=303)
 
+@app.post("/login/admin")
+async def login_admin(email: str = Form(...), chave: str = Form(...)):
+    conn = conectar_banco()
+    cursor = conn.cursor(dictionary=True)
+    chave_hash = hashlib.sha256(chave.encode()).hexdigest()
+    
+    query = "SELECT email FROM admin WHERE email = %s AND chave_acesso = %s"
+    cursor.execute(query, (email, chave_hash))
+    admin = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if admin:
+        response = RedirectResponse(url="/admin/usuarios", status_code=303)
+        response.set_cookie(key="admin_logado", value="true", httponly=True, path="/")
+        response.set_cookie(key="usuario_nome", value="Admin", httponly=True, path="/")
+        return response
+    
+    raise HTTPException(status_code=401, detail="E-mail ou Chave incorretos")
+
 @app.post("/cadastrar/usuario")
-async def cadastrar_usuario(nome: str = Form(...), email: str = Form(...), cpf: str = Form(...), telefone: str = Form(...), senha: str = Form(...)):
+async def cadastrar_usuario(
+    nome: str = Form(...), 
+    email: str = Form(...), 
+    cpf: str = Form(...), 
+    telefone: str = Form(...), 
+    senha: str = Form(...)
+):
     conn = conectar_banco()
     cursor = conn.cursor()
     try:
         senha_hash = hashlib.sha256(senha.encode()).hexdigest()
         cpf_limpo = ''.join(filter(str.isdigit, cpf))
         
-        caminho_foto = os.path.join(BASE_DIR, "..", "Imagens", "default_avatar.png")
-        bytes_padrao = open(caminho_foto, "rb").read() if os.path.exists(caminho_foto) else b""
+        # Carrega dinamicamente a foto padrão "icon.png" e converte em binário nativo para o banco
+        bytes_padrao = b""
+        caminho_foto_padrao = os.path.join(BASE_DIR, "..", "Imagens", "icon.png")
+        
+        if os.path.exists(caminho_foto_padrao):
+            with open(caminho_foto_padrao, "rb") as f:
+                bytes_padrao = f.read()
+            print("Sucesso: Imagem padrão carregada da pasta local!")
+        else:
+            print(f"Aviso Crítico: O arquivo {caminho_foto_padrao} não foi encontrado!")
 
-        cursor.execute("INSERT INTO usuario (nome, email, cpf, telefone, senha_hash, avatar) VALUES (%s, %s, %s, %s, %s, %s)", 
-                       (nome, email, cpf_limpo, telefone, senha_hash, bytes_padrao))
+        query_usuario = """
+            INSERT INTO usuario (nome, email, cpf, telefone, senha_hash, avatar) 
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(query_usuario, (nome, email, cpf_limpo, telefone, senha_hash, bytes_padrao))
         id_novo = cursor.lastrowid
-        cursor.execute("INSERT INTO cliente (id_usuario, cpf, telefone) VALUES (%s, %s, %s)", (id_novo, cpf_limpo, telefone))
+        
+        query_cliente = """
+            INSERT INTO cliente (id_usuario, cpf, telefone) 
+            VALUES (%s, %s, %s)
+        """
+        cursor.execute(query_cliente, (id_novo, cpf_limpo, telefone))
+        
         conn.commit()
         return RedirectResponse(url="/login", status_code=303)
     except Exception as e:
         conn.rollback()
+        print(f"Erro detalhado do Banco: {e}")
         raise HTTPException(status_code=400, detail="Erro no cadastro.")
     finally:
         cursor.close()
@@ -186,12 +260,84 @@ async def cadastrar_empresa(
         cursor.close()
         conn.close()
 
+@app.post("/perfil/editar")
+async def editar_perfil(
+    request: Request, 
+    nome: str = Form(...), 
+    email: str = Form(...), 
+    telefone: str = Form(...), 
+    senha: str = Form(...),
+    avatar: UploadFile = File(None)
+):
+    usuario_antigo = get_usuario_logado(request)
+    if not usuario_antigo:
+        raise HTTPException(status_code=401, detail="Usuário não autenticado")
+
+    conn = conectar_banco()
+    cursor = conn.cursor(dictionary=True, buffered=True)
+    try:
+        cursor.execute("SELECT id_usuario FROM usuario WHERE email = %s AND nome != %s", (email, usuario_antigo))
+        email_existente = cursor.fetchone()
+        if email_existente:
+            raise HTTPException(status_code=400, detail="E-mail já está em uso")
+
+        cursor.execute("SELECT id_usuario, avatar FROM usuario WHERE nome = %s", (usuario_antigo,))
+        user_atual = cursor.fetchone()
+        if not user_atual:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+        
+        id_usuario = user_atual['id_usuario']
+        bytes_imagem = user_atual['avatar'] 
+        senha_hash = hashlib.sha256(senha.encode()).hexdigest()
+
+        if avatar and avatar.filename:
+            conteudo_arquivo = await avatar.read()
+            if len(conteudo_arquivo) > 0:
+                bytes_imagem = conteudo_arquivo 
+
+        query_usuario = """
+            UPDATE usuario 
+            SET nome = %s, email = %s, telefone = %s, senha_hash = %s, avatar = %s 
+            WHERE id_usuario = %s
+        """
+        cursor.execute(query_usuario, (nome, email, telefone, senha_hash, bytes_imagem, id_usuario))
+
+        query_cliente = """
+            UPDATE cliente 
+            SET telefone = %s 
+            WHERE id_usuario = %s
+        """
+        cursor.execute(query_cliente, (telefone, id_usuario))
+
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"ERRO CRÍTICO NO BANCO: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Erro interno: {str(e)}")
+    finally:
+        cursor.close()
+        conn.close()
+
+    response = RedirectResponse(url="/perfil", status_code=303)
+    response.set_cookie(key="usuario_nome", value=nome, httponly=True, path="/")
+    return response
+
 @app.get("/logout")
 async def logout():
     response = RedirectResponse(url="/login", status_code=303)
-    response.delete_cookie("usuario_nome")
-    response.delete_cookie("admin_logado")
+    # Deleta forçadamente os cookies limpando o path do navegador
+    response.delete_cookie(key="usuario_nome", path="/")
+    response.delete_cookie(key="admin_logado", path="/")
+    print("Sessão encerrada e cookies removidos.")
     return response
 
 if __name__ == "__main__":
+    # Abre o Google Chrome automaticamente no Windows evitando o Simple Browser do VS Code
+    import webbrowser
+    from threading import Timer
+
+    def abrir_navegador():
+        webbrowser.open("http://127.0.0.1:8000/login")
+
+    Timer(1.5, abrir_navegador).start()
     uvicorn.run(app, host="127.0.0.1", port=8000)
