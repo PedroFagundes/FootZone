@@ -24,9 +24,12 @@ async def listar_usuarios(request: Request):
         conn = conectar_banco()
         cursor = conn.cursor(dictionary=True)
         
-        # Puxa os dados explicitando os campos exatos de telefone e cpf guardados na tabela do cliente
+        # Puxa os dados garantindo que NULL vira string vazia
         query = """
-            SELECT u.id_usuario, u.nome, u.email, c.cpf, c.telefone, 'Cliente' as tipo
+            SELECT u.id_usuario, u.nome, u.email, 
+                   COALESCE(c.cpf, '') as cpf, 
+                   COALESCE(c.telefone, '') as telefone, 
+                   'Cliente' as tipo
             FROM usuario u
             INNER JOIN cliente c ON u.id_usuario = c.id_usuario
             WHERE u.email NOT IN (SELECT email FROM admin)

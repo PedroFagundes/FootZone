@@ -26,6 +26,8 @@
                     <th>ID</th>
                     <th>Nome</th>
                     <th>E-mail</th>
+                    <th>Telefone</th>
+                    <th>CPF</th>
                     <th>Tipo</th>
                     <th>Ações</th>
                 </tr>
@@ -36,6 +38,8 @@
                     <td>{{ user.id_usuario }}</td>
                     <td>{{ user.nome }}</td>
                     <td>{{ user.email }}</td>
+                    <td>{{ user.telefone if user.telefone else '—' }}</td>
+                    <td>{{ user.cpf if user.cpf else '—' }}</td>
                     <td>{{ user.tipo }}</td>
                     <td>
                         <button class="btn-edit" 
@@ -62,20 +66,24 @@
     <div id="modalEditar" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center;">
         <div class="login-caixa modal-content" style="width: 420px; padding: 25px; background: #111; border-radius: 10px;">
             <h2 style="color:#d4af37; margin-bottom: 15px;">Editar Cadastro</h2>
-            <form action="/admin/usuarios/editar" method="post">
+            <form action="/admin/usuarios/editar" method="post" id="formEditarUsuario">
                 <input type="hidden" name="id_usuario" id="edit_id">
                 
                 <h4 style="text-align: left; color: white; margin-top: 10px;">Nome:</h4>
-                <input type="text" name="nome" id="edit_nome" oninput="MascaraNome(this)" required>
+                <input type="text" name="nome" id="edit_nome" oninput="MascaraNome(this); validarCampoEdit('edit_nome')" required>
+                <span id="erro-edit_nome" class="erro"></span>
                 
                 <h4 style="text-align: left; color: white; margin-top: 10px;">E-mail:</h4>
-                <input type="email" name="email" id="edit_email" oninput="this.value = this.value.toLowerCase()" required>
+                <input type="email" name="email" id="edit_email" oninput="mascaraEmail(this); validarCampoEdit('edit_email')" required>
+                <span id="erro-edit_email" class="erro"></span>
                 
                 <h4 style="text-align: left; color: white; margin-top: 10px;">Telefone de Contato:</h4>
-                <input type="text" name="telefone" id="edit_telefone" oninput="mascaraTelefone(this)" placeholder="(00) 00000-0000" required>
+                <input type="text" name="telefone" id="edit_telefone" oninput="mascaraTelefone(this); validarCampoEdit('edit_telefone')" placeholder="(00) 00000-0000" required>
+                <span id="erro-edit_telefone" class="erro"></span>
 
                 <h4 style="text-align: left; color: white; margin-top: 10px;">CPF:</h4>
-                <input type="text" name="cpf" id="edit_cpf" oninput="mascaraCPF(this)" placeholder="000.000.000-00" required>
+                <input type="text" name="cpf" id="edit_cpf" oninput="mascaraCPF(this); validarCampoEdit('edit_cpf')" placeholder="000.000.000-00" required>
+                <span id="erro-edit_cpf" class="erro"></span>
                 
                 <button type="submit" style="margin-top: 20px;">Salvar Alterações</button>
                 <button type="button" onclick="fecharModal()" style="background:#444; color: white; margin-top:10px;">Cancelar</button>
@@ -86,19 +94,52 @@
     <script src="{{ url_for('static', path='/script.js') }}"></script>
     <script>
         function prepararModal(botao) {
+            // Debug
+            console.log('CPF:', botao.getAttribute('data-cpf'));
+            console.log('Telefone:', botao.getAttribute('data-telefone'));
+            
+            // Carrega ID
             document.getElementById('edit_id').value = botao.getAttribute('data-id');
+            
+            // Carrega Nome
             document.getElementById('edit_nome').value = botao.getAttribute('data-nome');
             
-            // Garante que o e-mail carregue em minúsculo por segurança
+            // Carrega E-mail em minúsculo
             document.getElementById('edit_email').value = botao.getAttribute('data-email').toLowerCase();
             
+            // Carrega Telefone - se vier vazio, mantém vazio; senão aplica máscara
             const campoTelefone = document.getElementById('edit_telefone');
-            campoTelefone.value = botao.getAttribute('data-telefone');
-            if (typeof mascaraTelefone === "function") mascaraTelefone(campoTelefone);
+            const telefoneBruto = botao.getAttribute('data-telefone') || '';
+            if (telefoneBruto) {
+                const telefoneLimpo = telefoneBruto.replace(/\D/g, '').slice(0, 11);
+                campoTelefone.value = telefoneLimpo;
+                if (typeof mascaraTelefone === "function") mascaraTelefone(campoTelefone);
+            } else {
+                campoTelefone.value = '';
+            }
 
+            // Carrega CPF - se vier vazio, mantém vazio; senão aplica máscara
             const campoCPF = document.getElementById('edit_cpf');
-            campoCPF.value = botao.getAttribute('data-cpf');
-            if (typeof mascaraCPF === "function") mascaraCPF(campoCPF);
+            const cpfBruto = botao.getAttribute('data-cpf') || '';
+            if (cpfBruto) {
+                const cpfLimpo = cpfBruto.replace(/\D/g, '').slice(0, 11);
+                campoCPF.value = cpfLimpo;
+                if (typeof mascaraCPF === "function") mascaraCPF(campoCPF);
+            } else {
+                campoCPF.value = '';
+            }
+            
+            // Limpa mensagens de erro
+            document.getElementById('erro-edit_nome').textContent = '';
+            document.getElementById('erro-edit_email').textContent = '';
+            document.getElementById('erro-edit_telefone').textContent = '';
+            document.getElementById('erro-edit_cpf').textContent = '';
+            
+            // Remove bordas vermelhas
+            document.getElementById('edit_nome').style.borderColor = '';
+            document.getElementById('edit_email').style.borderColor = '';
+            document.getElementById('edit_telefone').style.borderColor = '';
+            document.getElementById('edit_cpf').style.borderColor = '';
             
             document.getElementById('modalEditar').style.display = 'flex';
         }

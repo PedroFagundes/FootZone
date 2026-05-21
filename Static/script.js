@@ -287,3 +287,84 @@ function toggleConfirmarSenha() {
     const input = document.getElementById("confirmarSenha");
     if (input) input.type = input.type === "password" ? "text" : "password";
 }
+
+// --- admin validação do crud usuario ---
+
+function validarCampoEdit(campoId) {
+    const input = document.getElementById(campoId);
+    const erro = document.getElementById("erro-" + campoId);
+    
+    if (!input || !erro) return true;
+
+    let valor = input.value.trim();
+    
+    // Remove caracteres especiais para contagem real
+    let valorLimpo = valor;
+    if (campoId === 'edit_cpf') valorLimpo = valor.replace(/\D/g, "");
+    if (campoId === 'edit_telefone') valorLimpo = valor.replace(/\D/g, "");
+
+    erro.textContent = "";
+    input.style.borderColor = "";
+
+    if (valor === "") {
+        const labels = {
+            'edit_nome': 'Nome',
+            'edit_email': 'E-mail',
+            'edit_telefone': 'Telefone',
+            'edit_cpf': 'CPF'
+        };
+        erro.textContent = `${labels[campoId]} é obrigatório.`;
+        input.style.borderColor = "red";
+        return false;
+    }
+
+    // Validações específicas
+    if (campoId === 'edit_nome' && valorLimpo.length < 3) {
+        erro.textContent = "Nome deve ter pelo menos 3 caracteres.";
+        input.style.borderColor = "red";
+        return false;
+    }
+
+    if (campoId === 'edit_email') {
+        const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!regexEmail.test(valor)) {
+            erro.textContent = "E-mail inválido.";
+            input.style.borderColor = "red";
+            return false;
+        }
+    }
+
+    if (campoId === 'edit_cpf' && valorLimpo.length !== 11) {
+        erro.textContent = "CPF deve ter 11 dígitos.";
+        input.style.borderColor = "red";
+        return false;
+    }
+
+    if (campoId === 'edit_telefone' && valorLimpo.length !== 11) {
+        erro.textContent = "Telefone deve ter 11 dígitos.";
+        input.style.borderColor = "red";
+        return false;
+    }
+
+    return true;
+}
+
+// Adiciona validação ao submit do formulário de edição
+document.addEventListener("DOMContentLoaded", () => {
+    const formEditar = document.getElementById("formEditarUsuario");
+    if (formEditar) {
+        formEditar.addEventListener("submit", (event) => {
+            let formValido = true;
+            
+            ['edit_nome', 'edit_email', 'edit_cpf', 'edit_telefone'].forEach(campoId => {
+                if (!validarCampoEdit(campoId)) {
+                    formValido = false;
+                }
+            });
+
+            if (!formValido) {
+                event.preventDefault();
+            }
+        });
+    }
+});
