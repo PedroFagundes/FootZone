@@ -55,9 +55,18 @@ async def page_catalogo(request: Request):
         conn = conectar_banco()
         cursor = conn.cursor(dictionary=True, buffered=True)
         
-        query = "SELECT p.*, pi.url FROM produto p LEFT JOIN produto_imagem pi ON p.id_produto = pi.id_produto"
+        # CORRIGIDO: Query adaptada para buscar a nova estrutura com imagem e categoria direto na tabela produto
+        query = "SELECT id_produto, nome, descricao, preco, tamanho, marca, categoria, imagem FROM produto"
         cursor.execute(query)
-        produtos = cursor.fetchall()
+        produtos_brutos = cursor.fetchall()
+        
+        # CORRIGIDO: Laço para converter os bytes da imagem binária para string Base64 legível no HTML do catálogo geral
+        for p in produtos_brutos:
+            if p['imagem']:
+                p['avatar_b64'] = base64.b64encode(p['imagem']).decode('utf-8')
+            else:
+                p['avatar_b64'] = None
+            produtos.append(p)
         
         cursor.execute("SELECT avatar FROM usuario WHERE nome = %s", (usuario_nome,))
         user_data = cursor.fetchone()
@@ -198,7 +207,6 @@ async def login_empresa(cnpj: str = Form(...), senha: str = Form(...)):
     conn.close()
     
     if empresa:
-        # CORRIGIDO: Redireciona a empresa autenticada diretamente para o novo painel focado
         response = RedirectResponse(url="/empresa/painel", status_code=303)
         response.set_cookie(key="usuario_nome", value=empresa['nome_empresa'], httponly=True, path="/")
         return response

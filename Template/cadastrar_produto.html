@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
+    <title>FootZone - Cadastrar Produto</title>
+</head>
+<body class="login-body-page" style="height: auto !important; min-height: 100vh !important; display: flex !important; align-items: center !important; justify-content: center !important; padding: 40px 0 !important; overflow-y: auto !important;">
+    <div class="background"></div>
+    
+    <div class="login-caixa" style="width: 450px; padding: 30px; margin: 0 auto;">
+        <div class="campos">
+            <a href="/empresa/painel" class="campoAtivo">Voltar ao Painel</a>
+        </div>
+
+        <h2>Novo Produto</h2>
+
+        <form action="/empresa/produtos/cadastrar" method="post" enctype="multipart/form-data">
+            
+            <h4>Nome do Produto:</h4>
+            <input type="text" name="nome" placeholder="Ex: Tênis Nike Air Max" required>
+
+            <h4>Marca:</h4>
+            <input type="text" name="marca" placeholder="Ex: Nike" required>
+
+            <h4>Categoria:</h4>
+            <input type="text" name="categoria" placeholder="Ex: Corrida, Casual, Basquete" required>
+
+            <h4>Tamanho:</h4>
+            <input type="text" name="tamanho" placeholder="Ex: 41" required>
+
+            <h4>Preço (R$):</h4>
+            <input type="number" step="0.01" name="preco" placeholder="0.00" required>
+
+            <h4>Descrição do Produto:</h4>
+            <input type="text" name="descricao" placeholder="Breve descrição do produto...">
+
+            <h4>Imagem do Produto:</h4>
+            <input type="file" name="imagem_arquivo" accept="image/*" required style="padding: 8px;">
+
+            <button type="submit">Cadastrar Produto</button>
+        </form>
+    </div>
+
+    <script src="{{ url_for('static', path='/script.js') }}"></script>
+</body>
+</html>

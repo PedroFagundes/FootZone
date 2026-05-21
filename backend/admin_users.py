@@ -1,4 +1,5 @@
 import os
+import base64
 from fastapi import APIRouter, Request, HTTPException, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -101,7 +102,7 @@ async def deletar_usuario(id: int, request: Request):
 
     return RedirectResponse(url="/admin/usuarios", status_code=303)
 
-# --- NOVA ROTA: EXIBIR CATÁLOGO DO ADMIN (ADICIONADA) ---
+# --- NOVA ROTA: EXIBIR CATÁLOGO DO ADMIN (CORRIGIDA) ---
 @router.get("/catalogoAdmin", response_class=HTMLResponse)
 async def page_catalogo_admin(request: Request):
     verificar_admin(request)
@@ -112,10 +113,18 @@ async def page_catalogo_admin(request: Request):
         conn = conectar_banco()
         cursor = conn.cursor(dictionary=True, buffered=True)
         
-        # SQL para buscar todos os produtos juntando com a tabela de imagens trazida pelo seu amigo
-        query = "SELECT p.*, pi.url FROM produto p LEFT JOIN produto_imagem pi ON p.id_produto = pi.id_produto"
+        # CORRIGIDO: Query adaptada para buscar a nova estrutura com imagem e categoria direto na tabela produto
+        query = "SELECT id_produto, nome, descricao, preco, tamanho, marca, categoria, imagem FROM produto"
         cursor.execute(query)
-        produtos = cursor.fetchall()
+        produtos_brutos = cursor.fetchall()
+        
+        # CORRIGIDO: Laço para converter os bytes da imagem binária para string Base64 legível no HTML
+        for p in produtos_brutos:
+            if p['imagem']:
+                p['avatar_b64'] = base64.b64encode(p['imagem']).decode('utf-8')
+            else:
+                p['avatar_b64'] = None
+            produtos.append(p)
         
         return templates.TemplateResponse("catalogoAdmin.html", {
             "request": request,

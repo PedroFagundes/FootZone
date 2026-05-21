@@ -32,9 +32,15 @@
     <div class="vitrine">
         {% for produto in produtos %}
         <div class="produto-card">
-            <img src="{{ produto.url if produto.url else 'https://via.placeholder.com/200' }}" alt="{{ produto.nome }}">
+            {% if produto.avatar_b64 %}
+                <img src="data:image/jpeg;base64,{{ produto.avatar_b64 }}" alt="{{ produto.nome }}">
+            {% else %}
+                <img src="https://via.placeholder.com/200" alt="Sem foto">
+            {% endif %}
+            
             <div class="info">
                 <h3>{{ produto.nome }}</h3>
+                <p style="color: #d4af37; font-size: 13px; font-weight: bold; margin-bottom: 5px;">{{ produto.categoria }}</p>
                 <p>{{ produto.marca }} | Tam: {{ produto.tamanho }}</p>
                 <p class="preco">R$ {{ "{:.2f}".format(produto.preco) }}</p>
                 <button class="btn-edit" style="width: 100%;">Editar Produto</button>
