@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
+    <title>FootZone - Catálogo Admin</title>
+</head>
+<body>
+
+<header>
+    <nav class="navbar">
+        <a href="/" class="logo">
+            <img src="/Imagens/logo.png" alt="Logo">
+        </a>
+
+        <ul class="nav-links">
+            <li><a href="/catalogoAdmin">Loja</a></li>
+            <li>
+                <a href="/admin/usuarios" style="display: inline-flex; align-items: center; gap: 8px;">
+                    <img src="/Imagens/default_avatar.png" alt="Painel Admin" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid #d4af37;">
+                    <span>Painel Admin</span>
+                </a>
+            </li>
+            <li><a href="/logout">Sair</a></li>
+        </ul>
+    </nav>
+</header>
+
+<main style="margin-top: 100px; padding: 20px;">
+    <h2 style="text-align: center; color: #d4af37; margin-bottom: 30px;">Gerenciamento de Produtos (Modo Admin)</h2>
+    <div class="vitrine">
+        {% for produto in produtos %}
+        <div class="produto-card">
+            <img src="{{ produto.url if produto.url else 'https://via.placeholder.com/200' }}" alt="{{ produto.nome }}">
+            <div class="info">
+                <h3>{{ produto.nome }}</h3>
+                <p>{{ produto.marca }} | Tam: {{ produto.tamanho }}</p>
+                <p class="preco">R$ {{ "{:.2f}".format(produto.preco) }}</p>
+                <button class="btn-edit" style="width: 100%;">Editar Produto</button>
+            </div>
+        </div>
+        {% else %}
+        <p style="color: white; text-align: center; grid-column: 1/-1;">Nenhum produto cadastrado no banco de dados.</p>
+        {% endfor %}
+    </div>
+</main>
+
+</body>
+</html>

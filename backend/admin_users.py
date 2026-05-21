@@ -100,3 +100,32 @@ async def deletar_usuario(id: int, request: Request):
             conn.close()
 
     return RedirectResponse(url="/admin/usuarios", status_code=303)
+
+# --- NOVA ROTA: EXIBIR CATÁLOGO DO ADMIN (ADICIONADA) ---
+@router.get("/catalogoAdmin", response_class=HTMLResponse)
+async def page_catalogo_admin(request: Request):
+    verificar_admin(request)
+    
+    conn = None
+    produtos = []
+    try:
+        conn = conectar_banco()
+        cursor = conn.cursor(dictionary=True, buffered=True)
+        
+        # SQL para buscar todos os produtos juntando com a tabela de imagens trazida pelo seu amigo
+        query = "SELECT p.*, pi.url FROM produto p LEFT JOIN produto_imagem pi ON p.id_produto = pi.id_produto"
+        cursor.execute(query)
+        produtos = cursor.fetchall()
+        
+        return templates.TemplateResponse("catalogoAdmin.html", {
+            "request": request,
+            "produtos": produtos,
+            "usuario_nome": request.cookies.get("usuario_nome") or "Admin",
+            "is_admin": True
+        })
+    except Exception as e:
+        print(f"Erro ao carregar catálogo do admin: {e}")
+        return HTMLResponse(content="Erro ao carregar catálogo", status_code=500)
+    finally:
+        if conn:
+            conn.close()
