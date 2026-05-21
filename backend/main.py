@@ -11,7 +11,6 @@ from db import conectar_banco
 app = FastAPI()
 
 # --- INTEGRAÇÃO DO ADMIN ---
-# Certifique-se de que o arquivo 'admin_users.py' está na mesma pasta que este main.py.
 try:
     from admin_users import router as admin_router 
     app.include_router(admin_router)
@@ -28,7 +27,6 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "..", "Template"))
 
 # --- UTILITÁRIOS ---
 def get_usuario_logado(request: Request):
-    # Retorna o nome ou string vazia para evitar erro de 'None' no .split() do HTML
     return request.cookies.get("usuario_nome") or ""
 
 def usuario_logado(request: Request):
@@ -41,7 +39,6 @@ def usuario_logado(request: Request):
 async def page_catalogo(request: Request):
     usuario_nome = get_usuario_logado(request)
     
-    # Se não houver usuário logado no cookie, barra o acesso e joga para o login
     if not usuario_nome:
         return RedirectResponse(url="/login", status_code=303)
         
@@ -52,12 +49,10 @@ async def page_catalogo(request: Request):
         conn = conectar_banco()
         cursor = conn.cursor(dictionary=True, buffered=True)
         
-        # Mantido o JOIN trazido pelo seu amigo para carregar a URL da imagem de cada produto corretamente
         query = "SELECT p.*, pi.url FROM produto p LEFT JOIN produto_imagem pi ON p.id_produto = pi.id_produto"
         cursor.execute(query)
         produtos = cursor.fetchall()
         
-        # Busca o avatar do usuário logado diretamente do MEDIUMBLOB
         cursor.execute("SELECT avatar FROM usuario WHERE nome = %s", (usuario_nome,))
         user_data = cursor.fetchone()
         
@@ -157,7 +152,6 @@ async def login_usuario(email: str = Form(...), senha: str = Form(...)):
     
     if user:
         response = RedirectResponse(url="/catalogo", status_code=303)
-        # Session Cookie seguro: Não salva em disco rígido e apaga quando o navegador fecha
         response.set_cookie(key="usuario_nome", value=user['nome'], httponly=True, path="/")
         return response
     return RedirectResponse(url="/login?erro=1", status_code=303)
@@ -175,12 +169,37 @@ async def login_admin(email: str = Form(...), chave: str = Form(...)):
     conn.close()
 
     if admin:
-        response = RedirectResponse(url="/admin/usuarios", status_code=303)
+        response = RedirectResponse(url="/catalogoAdmin", status_code=303)
         response.set_cookie(key="admin_logado", value="true", httponly=True, path="/")
         response.set_cookie(key="usuario_nome", value="Admin", httponly=True, path="/")
         return response
     
-    raise HTTPException(status_code=401, detail="E-mail ou Chave incorretos")
+    # CORRIGIDO: Retorna o redirecionamento com parâmetro de erro em vez de dar raise HTTPException
+    return RedirectResponse(url="/admin?erro=1", status_code=303)
+
+@app.post("/login/empresa")
+async def login_empresa(cnpj: str = Form(...), senha: str = Form(...)):
+    conn = conectar_banco()
+    cursor = conn.cursor(dictionary=True)
+    
+    cnpj_limpo = ''.join(filter(str.isdigit, cnpj))
+    senha_hash = hashlib.sha256(senha.encode()).hexdigest()
+    
+    query = "SELECT nome_empresa FROM empresa WHERE cnpj = %s AND senha_hash = %s"
+    cursor.execute(query, (cnpj_limpo, senha_hash))
+    empresa = cursor.fetchone()
+    
+    cursor.close()
+    conn.close()
+    
+    if empresa:
+        response = RedirectResponse(url="/catalogoAdmin", status_code=303)
+        # CORRIGIDO: Agora atribui o cookie "admin_logado" para passar pelo validador do catálogo administrativo
+        response.set_cookie(key="admin_logado", value="true", httponly=True, path="/")
+        response.set_cookie(key="usuario_nome", value=empresa['nome_empresa'], httponly=True, path="/")
+        return response
+        
+    return RedirectResponse(url="/login/empresa?erro=1", status_code=303)
 
 @app.post("/cadastrar/usuario")
 async def cadastrar_usuario(
@@ -196,7 +215,6 @@ async def cadastrar_usuario(
         senha_hash = hashlib.sha256(senha.encode()).hexdigest()
         cpf_limpo = ''.join(filter(str.isdigit, cpf))
         
-        # Carrega dinamicamente a foto padrão "icon.png" e converte em binário nativo para o banco
         bytes_padrao = b""
         caminho_foto_padrao = os.path.join(BASE_DIR, "..", "Imagens", "icon.png")
         
@@ -325,14 +343,12 @@ async def editar_perfil(
 @app.get("/logout")
 async def logout():
     response = RedirectResponse(url="/login", status_code=303)
-    # Deleta forçadamente os cookies limpando o path do navegador
     response.delete_cookie(key="usuario_nome", path="/")
     response.delete_cookie(key="admin_logado", path="/")
     print("Sessão encerrada e cookies removidos.")
     return response
 
 if __name__ == "__main__":
-    # Abre o Google Chrome automaticamente no Windows evitando o Simple Browser do VS Code
     import webbrowser
     from threading import Timer
 

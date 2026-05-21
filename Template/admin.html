@@ -16,6 +16,10 @@
 
         <h2>Acesso Restrito</h2>
 
+        {% if request.query_params.get('erro') %}
+            <span class="erro" style="text-align: center; margin-bottom: 15px;">Usuário ou senha inválidos.</span>
+        {% endif %}
+
 <form action="/login/admin" method="post">
     <h4>E-mail do Administrador:</h4>
     <input type="email" name="email" required placeholder="ex: admin@footzone.com">
