@@ -10,12 +10,18 @@ from db import conectar_banco
 
 app = FastAPI()
 
-# --- INTEGRAÇÃO DO ADMIN ---
+# --- INTEGRAÇÃO DO ADMIN E DA EMPRESA ---
 try:
     from admin_users import router as admin_router 
     app.include_router(admin_router)
 except ImportError:
     print("Aviso: admin_users.py não encontrado.")
+
+try:
+    from empresa_produtos import router as empresa_router 
+    app.include_router(empresa_router)
+except ImportError:
+    print("Aviso: empresa_produtos.py não encontrado.")
 
 print("Rotas carregadas com sucesso:", [route.path for route in app.routes])
 
@@ -174,7 +180,6 @@ async def login_admin(email: str = Form(...), chave: str = Form(...)):
         response.set_cookie(key="usuario_nome", value="Admin", httponly=True, path="/")
         return response
     
-    # CORRIGIDO: Retorna o redirecionamento com parâmetro de erro em vez de dar raise HTTPException
     return RedirectResponse(url="/admin?erro=1", status_code=303)
 
 @app.post("/login/empresa")
@@ -193,9 +198,8 @@ async def login_empresa(cnpj: str = Form(...), senha: str = Form(...)):
     conn.close()
     
     if empresa:
-        response = RedirectResponse(url="/catalogoAdmin", status_code=303)
-        # CORRIGIDO: Agora atribui o cookie "admin_logado" para passar pelo validador do catálogo administrativo
-        response.set_cookie(key="admin_logado", value="true", httponly=True, path="/")
+        # CORRIGIDO: Redireciona a empresa autenticada diretamente para o novo painel focado
+        response = RedirectResponse(url="/empresa/painel", status_code=303)
         response.set_cookie(key="usuario_nome", value=empresa['nome_empresa'], httponly=True, path="/")
         return response
         

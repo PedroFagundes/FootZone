@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
-    <title>FootZone - Catálogo Admin</title>
+    <title>FootZone - Painel da Empresa</title>
 </head>
 <body>
 
@@ -15,11 +15,11 @@
         </div>
 
         <ul class="nav-links">
-            <li><a href="/catalogoAdmin">Loja</a></li>
+            <li><a href="/empresa/produtos/cadastrar" class="btn-login">Cadastrar Produto</a></li>
             <li>
-                <a href="/admin/usuarios" style="display: inline-flex; align-items: center; gap: 8px;">
-                    <img src="/Imagens/default_avatar.png" alt="Painel Admin" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid #d4af37;">
-                    <span>Painel Admin</span>
+                <a href="/empresa/painel" style="display: inline-flex; align-items: center; gap: 8px;">
+                    <img src="/Imagens/default_avatar.png" alt="Logo Empresa" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid #d4af37;">
+                    <span>{{ usuario }}</span>
                 </a>
             </li>
             <li><a href="/logout">Sair</a></li>
@@ -28,7 +28,7 @@
 </header>
 
 <main style="margin-top: 100px; padding: 20px;">
-    <h2 style="text-align: center; color: #d4af37; margin-bottom: 30px;">Gerenciamento de Produtos (Modo Admin)</h2>
+    <h2 style="text-align: center; color: #d4af37; margin-bottom: 30px;">Gerenciamento de Estoque - {{ usuario }}</h2>
     <div class="vitrine">
         {% for produto in produtos %}
         <div class="produto-card">
@@ -37,11 +37,11 @@
                 <h3>{{ produto.nome }}</h3>
                 <p>{{ produto.marca }} | Tam: {{ produto.tamanho }}</p>
                 <p class="preco">R$ {{ "{:.2f}".format(produto.preco) }}</p>
-                <button class="btn-edit" style="width: 100%;">Editar Produto</button>
+                <button class="btn-edit" style="width: 100%;">Editar Estoque</button>
             </div>
         </div>
         {% else %}
-        <p style="color: white; text-align: center; grid-column: 1/-1;">Nenhum produto cadastrado no banco de dados.</p>
+        <p style="color: white; text-align: center; grid-column: 1/-1;">Sua loja ainda não possui produtos cadastrados.</p>
         {% endfor %}
     </div>
 </main>
