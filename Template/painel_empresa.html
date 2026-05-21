@@ -43,7 +43,9 @@
                 <p style="color: #d4af37; font-size: 13px; font-weight: bold; margin-bottom: 5px;">{{ produto.categoria }}</p>
                 <p>{{ produto.marca }} | Tam: {{ produto.tamanho }}</p>
                 <p class="preco">R$ {{ "{:.2f}".format(produto.preco) }}</p>
-                <button class="btn-edit" style="width: 100%;">Editar Estoque</button>
+                <a href="/empresa/produtos/editar/{{ produto.id_produto }}" style="text-decoration: none; width: 100%; display: block;">
+                    <button type="button" class="btn-edit" style="width: 100%; cursor: pointer;">Editar</button>
+                </a>
             </div>
         </div>
         {% else %}
