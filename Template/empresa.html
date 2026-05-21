@@ -60,11 +60,40 @@
             <input type="text" name="telefone" id="telefone" oninput="mascaraTelefone(this)" placeholder="(00) 00000-0000" required>
             <span id="erro-telefone" class="erro"></span>
 
-            <label for="endereco">
-                <h4>Endereço da Sede<span class="obrigatorio">*</span></h4>
-            </label>
-            <input type="text" id="endereco" name="endereco" placeholder="Rua, Número, Bairro" required>
-            <span id="erro-endereco" class="erro"></span>
+            <!-- Campo Endereço -->
+            
+
+            <label for="cep">
+                <h4>CEP <span class="obrigatorio">*</span></h4>
+                </label>
+                <div style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 5px;">
+                    <input type="text" id="cep" name="cep" placeholder="00000-000" oninput="mascaraCEP(this)" required>
+                    <button type="button" id="btnPreencherEndereco" style="padding: 10px 10px; background: #d4af37; color: #000; border: none; border-radius: 8px; cursor: pointer; width: 100%;">Preencher</button>
+                    <span id="erro-cep" class="erro"></span>
+                <label for="logradouro">
+                    <h4>Logradouro (Rua/Avenida)<span class="obrigatorio">*</span></h4>
+                </label>
+                <input type="text" id="logradouro" name="logradouro" placeholder="Rua, Avenida..." required readonly>
+                <span id="erro-logradouro" class="erro"></span>
+                <input type="hidden" id="endereco" name="endereco">
+
+                <label for="bairro">
+                    <h4>Bairro<span class="obrigatorio">*</span></h4>
+                </label>
+                <input type="text" id="bairro" name="bairro" placeholder="Bairro" required readonly>
+                <span id="erro-bairro" class="erro"></span>
+
+                <label for="cidade">
+                    <h4>Cidade<span class="obrigatorio">*</span></h4>
+                </label>
+                <input type="text" id="cidade" name="cidade" placeholder="Cidade" required readonly>
+                <span id="erro-cidade" class="erro"></span>
+
+                <label for="numero">
+                    <h4>Número<span class="obrigatorio">*</span></h4>
+                </label>
+                <input type="text" id="numero" name="numero" placeholder="Ex: 123 ou SN" required>
+                <span id="erro-numero" class="erro"></span>
 
             <button type="submit">Finalizar Cadastro</button>
         </form>

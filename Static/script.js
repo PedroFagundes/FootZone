@@ -54,6 +54,12 @@ function mascaraCNPJ(input) {
     input.value = valor;
 }
 
+// Mascara para CEP: 00000-000
+function mascaraCEP(input) {
+    let valor = input.value.replace(/\D/g, "").slice(0, 8);
+    valor = valor.replace(/^(\d{5})(\d)/, "$1-$2");
+    input.value = valor;
+}
 // --- VALIDAÇÕES ---
 
 function senhaForte(input) {
@@ -120,7 +126,11 @@ const campos = [
     // Campos adicionais para empresa
     { id: 'nome_empresa', nome: 'Nome da Empresa', min: 3, tipo: 'texto' },
     { id: 'cnpj', nome: 'CNPJ', min: 14, tipo: 'numero' },
-    { id: 'endereco', nome: 'Endereço', min: 5, tipo: 'texto' }
+    { id: 'cep', nome: 'CEP', min: 8, tipo: 'numero' },
+    { id: 'logradouro', nome: 'Logradouro', min: 3, tipo: 'texto' },
+    { id: 'bairro', nome: 'Bairro', min: 2, tipo: 'texto' },
+    { id: 'cidade', nome: 'Cidade', min: 2, tipo: 'texto' },
+    { id: 'numero', nome: 'Número', min: 1, tipo: 'texto' }
 ];
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -143,10 +153,67 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    const inputCep = document.getElementById("cep");
+    const btnPreencherEndereco = document.getElementById("btnPreencherEndereco");
+
+    if (btnPreencherEndereco) {
+        btnPreencherEndereco.addEventListener("click", () => {
+            const cep = inputCep ? inputCep.value.replace(/\D/g, "") : "";
+            const erroCep = document.getElementById("erro-cep");
+
+            if (cep.length !== 8) {
+                erroCep.textContent = "Informe um CEP válido antes de preencher.";
+                erroCep.style.color = "red";
+                if (inputCep) inputCep.style.borderColor = "red";
+                return;
+            }
+
+            erroCep.textContent = "Buscando endereço...";
+            erroCep.style.color = "#d4af37";
+
+            fetch(`https://viacep.com.br/ws/${cep}/json/`)
+                .then(response => response.json())
+                .then(dados => {
+                    if (dados.erro) {
+                        erroCep.textContent = "CEP não encontrado.";
+                        erroCep.style.color = "red";
+                        if (inputCep) inputCep.style.borderColor = "red";
+                        limparCamposEndereco();
+                    } else {
+                        erroCep.textContent = "";
+                        if (inputCep) inputCep.style.borderColor = "";
+
+                        document.getElementById("logradouro").value = dados.logradouro || "";
+                        document.getElementById("bairro").value = dados.bairro || "";
+                        document.getElementById("cidade").value = `${dados.localidade || ""} - ${dados.uf || ""}`.trim();
+
+                        atualizarEnderecoCompleto();
+
+                        campos.forEach(c => {
+                            if (['logradouro', 'bairro', 'cidade'].includes(c.id)) {
+                                validarCampo(c);
+                            }
+                        });
+
+                        const inputNumero = document.getElementById("numero");
+                        if (inputNumero) inputNumero.focus();
+                    }
+                })
+                .catch(() => {
+                    erroCep.textContent = "Erro ao buscar o CEP. Tente novamente.";
+                    erroCep.style.color = "red";
+                });
+        });
+    }
+
+    const inputNumero = document.getElementById("numero");
+    if (inputNumero) {
+        inputNumero.addEventListener("input", atualizarEnderecoCompleto);
+    }
+
     const inputConfirmar = document.getElementById("confirmarSenha");
     if (inputConfirmar) inputConfirmar.addEventListener("input", confirmarSenha);
 
-    // Validação no envio do formulário de cadastro
     const formsParaValidar = [
         document.getElementById("cadastro"),
         document.getElementById("formEmpresa")
@@ -154,6 +221,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     formsParaValidar.forEach(form => {
         form.addEventListener("submit", (event) => {
+            atualizarEnderecoCompleto();
             let formValido = true;
             campos.forEach(campo => {
                 if (!validarCampo(campo)) formValido = false;
@@ -169,6 +237,42 @@ document.addEventListener("DOMContentLoaded", () => {
         inputSenha.addEventListener('input', function() {
             this.value = this.value.replace(/\s/g, '');
         });
+    }
+
+    function limparCamposEndereco() {
+        const logradouro = document.getElementById("logradouro");
+        const endereco = document.getElementById("endereco");
+        const bairro = document.getElementById("bairro");
+        const cidade = document.getElementById("cidade");
+
+        if (logradouro) logradouro.value = "";
+        if (endereco) endereco.value = "";
+        if (bairro) bairro.value = "";
+        if (cidade) cidade.value = "";
+    }
+
+    function montarEnderecoCompleto() {
+        const logradouro = document.getElementById("logradouro") ? document.getElementById("logradouro").value.trim() : "";
+        const numero = document.getElementById("numero") ? document.getElementById("numero").value.trim() : "";
+        const bairro = document.getElementById("bairro") ? document.getElementById("bairro").value.trim() : "";
+        const cidade = document.getElementById("cidade") ? document.getElementById("cidade").value.trim() : "";
+        const cep = inputCep ? inputCep.value.trim() : "";
+
+        if (!logradouro) return "";
+
+        let enderecoCompleto = logradouro;
+        if (numero) enderecoCompleto += `, ${numero}`;
+        if (bairro) enderecoCompleto += ` - ${bairro}`;
+        if (cidade) enderecoCompleto += `, ${cidade}`;
+        if (cep) enderecoCompleto += `, CEP ${cep}`;
+
+        return enderecoCompleto;
+    }
+
+    function atualizarEnderecoCompleto() {
+        const campoEndereco = document.getElementById("endereco");
+        const completo = montarEnderecoCompleto();
+        if (campoEndereco) campoEndereco.value = completo;
     }
 });
 
