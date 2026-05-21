@@ -20,16 +20,29 @@
         <h2>Cadastrar sua Loja</h2>
 
         <form action="/cadastrar/empresa" method="post" id="formEmpresa">
-            <h4>Nome da Empresa:</h4>
-            <input type="text" name="nome_empresa" placeholder="Ex: Nike Store" required>
+            <!-- Campo Nome da Empresa -->
+            <label for="nome_empresa">
+                <h4>Nome da Empresa<span class="obrigatorio">*</span></h4>
+            </label>
+            <input type="text" id="nome_empresa" name="nome_empresa" oninput="MascaraNome_empresa(this)" placeholder="Ex: Nike Store" required>
+            <span id="erro-nome_empresa" class="erro"></span>
 
-            <h4>CNPJ:</h4>
-            <input type="text" name="cnpj" placeholder="00.000.000/0000-00" oninput="mascaraCNPJ(this)" required>
+            <!-- Campo CNPJ -->
+            <label for="cnpj">
+                <h4>CNPJ<span class="obrigatorio">*</span></h4>
+            </label>
+            <input type="text" id="cnpj" name="cnpj" placeholder="00.000.000/0000-00" oninput="mascaraCNPJ(this)" required>
+            <span id="erro-cnpj" class="erro"></span>
 
-            <h4>E-mail Corporativo:</h4>
-            <input type="email" name="email" placeholder="contato@empresa.com" oninput="mascaraEmail(this)" required>
+            <label for="email">
+                <h4>E-mail Corporativo<span class="obrigatorio">*</span></h4>
+            </label>
+            <input type="email" id="email" name="email" placeholder="contato@empresa.com" oninput="mascaraEmail(this)" required>
+            <span id="erro-email" class="erro"></span>
 
-            <h4>Senha de Acesso:</h4>
+            <label for="senha">
+                <h4>Senha de Acesso<span class="obrigatorio">*</span></h4>
+            </label>
             <div class="campo-senha">
                 <input type="password" name="senha" id="senha" placeholder="Crie uma senha" required>
                 <span class="toggle-senha" onclick="toggleSenha()">
@@ -38,12 +51,20 @@
                     </svg>
                 </span>
             </div>
+            <span id="erro-senha" class="erro"></span>
 
-            <h4>Telefone:</h4>
-            <input type="text" name="telefone" placeholder="(00) 00000-0000" oninput="mascaraTelefone(this)" required>
+            <!-- Campo Telefone -->
+            <label for="telefone">
+                <h4>Telefone <span class="obrigatorio">*</span></h4>
+            </label>
+            <input type="text" name="telefone" id="telefone" oninput="mascaraTelefone(this)" placeholder="(00) 00000-0000" required>
+            <span id="erro-telefone" class="erro"></span>
 
-            <h4>Endereço da Sede:</h4>
-            <input type="text" name="endereco" placeholder="Rua, Número, Bairro" required>
+            <label for="endereco">
+                <h4>Endereço da Sede<span class="obrigatorio">*</span></h4>
+            </label>
+            <input type="text" id="endereco" name="endereco" placeholder="Rua, Número, Bairro" required>
+            <span id="erro-endereco" class="erro"></span>
 
             <button type="submit">Finalizar Cadastro</button>
         </form>

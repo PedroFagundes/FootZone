@@ -1,11 +1,19 @@
 // --- MÁSCARAS DE ENTRADA ---
 
 // Mascara para nome: apenas letras e espaços, limite de 100 caracteres
-function MascaraNome(input) {
+function MascaraNome (input) {
     let valor = input.value;
     valor = valor.replace(/[^a-zA-ZÀ-ÿ\s]/g, "");
     input.value = valor.slice(0, 100);
 }
+
+// Mascara para nome da empresa: apenas letras e espaços, limite de 100 caracteres
+function MascaraNome_empresa (input) {
+    let valor = input.value;
+    valor = valor.replace(/[^a-zA-ZÀ-ÿ\s]/g, "");
+    input.value = valor.slice(0, 100);
+}
+
 
 // Mascara para chave de acesso: apenas números, limite de 8 caracteres
 function mascaraChavedeAcesso(input) {
@@ -108,7 +116,11 @@ const campos = [
     { id: 'email', nome: 'E-mail', min: 5, tipo: 'texto' },
     { id: 'telefone', nome: 'Telefone', min: 11, tipo: 'numero' },
     { id: 'senha', nome: 'Senha', min: 8, tipo: 'texto' },
-    { id: 'confirmarSenha', nome: 'Confirmar Senha', min: 8, tipo: 'texto' }
+    { id: 'confirmarSenha', nome: 'Confirmar Senha', min: 8, tipo: 'texto' },
+    // Campos adicionais para empresa
+    { id: 'nome_empresa', nome: 'Nome da Empresa', min: 3, tipo: 'texto' },
+    { id: 'cnpj', nome: 'CNPJ', min: 14, tipo: 'numero' },
+    { id: 'endereco', nome: 'Endereço', min: 5, tipo: 'texto' }
 ];
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -135,9 +147,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (inputConfirmar) inputConfirmar.addEventListener("input", confirmarSenha);
 
     // Validação no envio do formulário de cadastro
-    const formCadastro = document.getElementById("cadastro");
-    if (formCadastro) {
-        formCadastro.addEventListener("submit", (event) => {
+    const formsParaValidar = [
+        document.getElementById("cadastro"),
+        document.getElementById("formEmpresa")
+    ].filter(Boolean);
+
+    formsParaValidar.forEach(form => {
+        form.addEventListener("submit", (event) => {
             let formValido = true;
             campos.forEach(campo => {
                 if (!validarCampo(campo)) formValido = false;
@@ -145,7 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!confirmarSenha()) formValido = false;
             if (!formValido) event.preventDefault();
         });
-    }
+    });
 
     // Impedir espaços na senha
     const inputSenha = document.getElementById('senha');

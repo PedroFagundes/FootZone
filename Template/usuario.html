@@ -11,7 +11,7 @@
     <div class="login-caixa">
         <div class="campos">
             <a href="/login" class="campoAtivo">Usuário</a>
-            <a href="/login/empresa" class="campoDesativado">Empresa</a>
+            <a href="empresa" class="campoDesativado">Empresa</a>
             <a href="/admin" class="campoDesativado">Admin</a>
         </div>
 
@@ -21,7 +21,8 @@
     <label for="nome">
         <h4>Nome <span class="obrigatorio">*</span></h4>
     </label>
-    <input type="text" id="nome" name="nome" oninput="MascaraNome(this)" required>
+
+    <input type="text" id="nome" name="nome" oninput="MascaraNome(this)"  placeholder="Lucas Silva">
     <span id="erro-nome" class="erro"></span>
 
     <!-- Campo CPF -->
@@ -35,7 +36,7 @@
     <label for="email">
         <h4>Email <span class="obrigatorio">*</span></h4>
     </label>
-    <input type="email" name="email" id="email" oninput="mascaraEmail(this)" required>
+    <input type="email" name="email" id="email" oninput="mascaraEmail(this)" placeholder="exemplo@email.com" required>
     <span id="erro-email" class="erro"></span>
 
     <!-- Campo Telefone -->
@@ -50,7 +51,7 @@
         <h4>Senha <span class="obrigatorio">*</span></h4>
     </label>
     <div class="campo-senha">
-        <input type="password" name="senha" id="senha" oninput="senhaForte(this)" required>
+        <input type="password" name="senha" id="senha" oninput="senhaForte(this)" placeholder="Digite sua senha" required>
         <span class="toggle-senha" onclick="toggleSenha()" id="btnSenha">
             <!-- Ícone de alternar visibilidade da senha -->
             <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#d4af37">
@@ -65,7 +66,7 @@
         <h4>Confirmar Senha <span class="obrigatorio">*</span></h4>
     </label>
     <div class="campo-senha">
-        <input type="password" id="confirmarSenha" oninput="confirmarSenha()" required>
+        <input type="password" id="confirmarSenha" oninput="confirmarSenha()" placeholder="Confirme sua senha" required>
         <span class="toggle-senha" onclick="toggleConfirmarSenha()" id="btnConfirmar">
             <!-- Ícone de alternar visibilidade da senha -->
             <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#d4af37">
@@ -79,7 +80,11 @@
 
             <button type="submit">Finalizar Cadastro</button>
         </form>
+    <div style="margin-top: 15px;">
+        <p style="color: #888; font-size: 12px;">Já possui cadastro ? <a href="/login" style="color: #d4af37; text-decoration: none;">Acesse o Painel</a></p>
     </div>
+    </div>
+    
     <script src="{{ url_for('static', path='/script.js') }}"></script>
 </body>
 </html>
