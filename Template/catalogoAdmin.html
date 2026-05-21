@@ -43,7 +43,10 @@
                 <p style="color: #d4af37; font-size: 13px; font-weight: bold; margin-bottom: 5px;">{{ produto.categoria }}</p>
                 <p>{{ produto.marca }} | Tam: {{ produto.tamanho }}</p>
                 <p class="preco">R$ {{ "{:.2f}".format(produto.preco) }}</p>
-                <button class="btn-edit" style="width: 100%;">Editar Produto</button>
+                
+                <button type="button" class="btn-del" style="width: 100%; cursor: pointer;" onclick="abrirModalExclusao('{{ produto.id_produto }}', '{{ produto.nome }}')">
+                    Excluir Produto
+                </button>
             </div>
         </div>
         {% else %}
@@ -51,6 +54,52 @@
         {% endfor %}
     </div>
 </main>
+
+<div id="modal-confirmacao-custom" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: #111; border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 12px; width: 420px; padding: 30px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.7); position: relative;">
+        
+        <div style="margin-bottom: 15px;">
+            <svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 -960 960 960" width="48px" fill="#ff4f4f">
+                <path d="M480-280q17 0 28.5-11.5T520-320q0-17-11.5-28.5T480-360q-17 0-28.5 11.5T440-320q0 17 11.5 28.5T480-280Zm-40-160h80v-240h-80v240Zm40 360q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/>
+            </svg>
+        </div>
+
+        <h3 style="color: #fff; font-size: 20px; margin-bottom: 10px;">Confirmar Exclusão</h3>
+        <p style="color: #aaa; font-size: 14px; line-height: 1.5; margin-bottom: 25px;">
+            Tem certeza que deseja excluir o produto <strong id="modal-nome-produto" style="color: #d4af37;"></strong> permanentemente do sistema?
+        </p>
+
+        <form id="form-exclusao-admin" method="post" action="">
+            <div style="display: flex; gap: 15px;">
+                <button type="submit" style="flex: 1; background: #ff4f4f; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; margin-top: 0;">
+                    Sim, Excluir
+                </button>
+                <button type="button" onclick="fecharModalExclusao()" style="flex: 1; background: #222; color: #aaa; border: 1px solid #333; padding: 12px 20px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; margin-top: 0;">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function abrirModalExclusao(idProduto, nomeProduto) {
+        const modal = document.getElementById('modal-confirmacao-custom');
+        const txtNome = document.getElementById('modal-nome-produto');
+        const form = document.getElementById('form-exclusao-admin');
+        
+        txtNome.innerText = nomeProduto;
+        
+        // CORREÇÃO DA ROTA: Monta a URL absoluta baseada na raiz do servidor atual
+        form.action = window.location.origin + `/admin/produtos/deletar/${idProduto}`;
+        
+        modal.style.display = 'flex';
+    }
+
+    function fecharModalExclusao() {
+        document.getElementById('modal-confirmacao-custom').style.display = 'none';
+    }
+</script>
 
 </body>
 </html>

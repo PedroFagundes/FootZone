@@ -102,7 +102,7 @@ async def deletar_usuario(id: int, request: Request):
 
     return RedirectResponse(url="/admin/usuarios", status_code=303)
 
-# --- NOVA ROTA: EXIBIR CATÁLOGO DO ADMIN (CORRIGIDA) ---
+# --- ROTA: EXIBIR CATÁLOGO DO ADMIN ---
 @router.get("/catalogoAdmin", response_class=HTMLResponse)
 async def page_catalogo_admin(request: Request):
     verificar_admin(request)
@@ -113,12 +113,10 @@ async def page_catalogo_admin(request: Request):
         conn = conectar_banco()
         cursor = conn.cursor(dictionary=True, buffered=True)
         
-        # CORRIGIDO: Query adaptada para buscar a nova estrutura com imagem e categoria direto na tabela produto
         query = "SELECT id_produto, nome, descricao, preco, tamanho, marca, categoria, imagem FROM produto"
         cursor.execute(query)
         produtos_brutos = cursor.fetchall()
         
-        # CORRIGIDO: Laço para converter os bytes da imagem binária para string Base64 legível no HTML
         for p in produtos_brutos:
             if p['imagem']:
                 p['avatar_b64'] = base64.b64encode(p['imagem']).decode('utf-8')
@@ -138,3 +136,28 @@ async def page_catalogo_admin(request: Request):
     finally:
         if conn:
             conn.close()
+
+# --- ROTA: EXCLUIR PRODUTO PELO ADMIN (FIXED URL) ---
+@router.post("/admin/produtos/deletar/{id_produto}")
+async def admin_deletar_produto(id_produto: int, request: Request):
+    verificar_admin(request)
+    
+    conn = None
+    try:
+        conn = conectar_banco()
+        cursor = conn.cursor()
+        
+        # Executa a remoção mestre na tabela produto usando o ID
+        cursor.execute("DELETE FROM produto WHERE id_produto = %s", (id_produto,))
+        conn.commit()
+        print(f"Sucesso: Admin removeu o produto ID {id_produto} do sistema.")
+        
+    except Exception as e:
+        if conn: conn.rollback()
+        print(f"Erro crítico ao admin deletar produto: {e}")
+        raise HTTPException(status_code=400, detail="Não foi possível remover o produto.")
+    finally:
+        if conn:
+            conn.close()
+        
+    return RedirectResponse(url="/catalogoAdmin", status_code=303)

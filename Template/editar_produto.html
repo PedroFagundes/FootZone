@@ -3,53 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', path='/admin_forms.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
-    <title>FootZone - Editar Produto</title>
-</head>
-<body class="login-body-page" style="height: auto !important; min-height: 100vh !important; display: flex !important; align-items: center !important; justify-content: center !important; padding: 40px 0 !important; overflow-y: auto !important;">
-    <div class="background"></div>
     
-    <div class="login-caixa" style="width: 450px; padding: 30px; margin: 0 auto;">
-        <div class="campos">
-            <a href="/empresa/painel" class="campoAtivo">Voltar ao Painel</a>
-        </div>
+    <title>FootZone - Editar Produto</title>
+
+</head>
+
+<body>
+
+<header>
+    <nav class="navbar">
+        <a href="/" class="logo">
+            <img src="/Imagens/logo.png" alt="Logo">
+        </a>
+
+        <ul class="nav-links">
+            <li><a href="/catalogo">Loja</a></li>
+            <li>
+                <a href="/empresa/painel" style="display: inline-flex; align-items: center; gap: 8px;">
+                    {{ usuario }}
+                </a>
+            </li>
+            <li><a href="/logout">Sair</a></li>
+        </ul>
+    </nav>
+</header>
+
+    <div class="admin-container">
 
         <h2>Editar Produto</h2>
 
         <form action="/empresa/produtos/editar/{{ produto.id_produto }}" method="post" enctype="multipart/form-data">
-            
-            <h4>Nome do Produto:</h4>
-            <input type="text" name="nome" value="{{ produto.nome }}" required>
 
-            <h4>Marca:</h4>
-            <input type="text" name="marca" value="{{ produto.marca }}" required>
+            <div class="avatar-wrapper">
+                {% if produto.avatar_b64 %}
+                    <img src="data:image/jpeg;base64,{{ produto.avatar_b64 }}" alt="Produto" id="avatar-pic">
+                {% else %}
+                    <img src="https://via.placeholder.com/200" alt="Sem foto" id="avatar-pic">
+                {% endif %}
+                
+                <input type="file" id="imagem_arquivo" name="imagem_arquivo" accept="image/*" class="avatar-file-input">
+                
+                <label for="imagem_arquivo" class="avatar-label-btn">
+                    Alterar Foto do Produto
+                </label>
+            </div>
 
-            <h4>Categoria:</h4>
-            <input type="text" name="categoria" value="{{ produto.categoria }}" required>
+            <table>
+                <tr>
+                    <td>
+                        <label for="nome">Nome</label>
+                    </td>
+                    <td>
+                        <input type="text" id="nome" name="nome" value="{{ produto.nome }}" required>
+                    </td>
+                </tr>
 
-            <h4>Tamanho:</h4>
-            <input type="text" name="tamanho" value="{{ produto.tamanho }}" required>
+                <tr>
+                    <td>
+                        <label for="marca">Marca</label>
+                    </td>
+                    <td>
+                        <input type="text" id="marca" name="marca" value="{{ produto.marca }}" required>
+                    </td>
+                </tr>
 
-            <h4>Preço (R$):</h4>
-            <input type="number" step="0.01" name="preco" value="{{ produto.preco }}" required>
+                <tr>
+                    <td>
+                        <label for="categoria">Categoria</label>
+                    </td>
+                    <td>
+                        <input type="text" id="categoria" name="categoria" value="{{ produto.categoria }}" required>
+                    </td>
+                </tr>
 
-            <h4>Descrição do Produto:</h4>
-            <input type="text" name="descricao" value="{{ produto.descricao if produto.descricao else '' }}">
+                <tr>
+                    <td>
+                        <label for="tamanho">Tamanho</label>
+                    </td>
+                    <td>
+                        <input type="text" id="tamanho" name="tamanho" value="{{ produto.tamanho }}" required>
+                    </td>
+                </tr>
 
-            <h4>Imagem do Produto:</h4>
-            {% if produto.avatar_b64 %}
-                <div style="text-align: center; margin-bottom: 10px;">
-                    <img src="data:image/jpeg;base64,{{ produto.avatar_b64 }}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #d4af37;">
-                    <p style="color: #aaa; font-size: 12px; margin: 5px 0 0 0;">Imagem atual</p>
-                </div>
-            {% endif %}
-            <input type="file" name="imagem_arquivo" accept="image/*" style="padding: 8px;">
-            <p style="color: #888; font-size: 11px; margin-top: -5px; padding-left: 8px;">Deixe em branco para manter a imagem atual.</p>
+                <tr>
+                    <td>
+                        <label for="preco">Preço (R$)</label>
+                    </td>
+                    <td>
+                        <input type="number" step="0.01" id="preco" name="preco" value="{{ produto.preco }}" required>
+                    </td>
+                </tr>
 
-            <button type="submit" style="margin-top: 15px;">Salvar Alterações</button>
+                <tr>
+                    <td>
+                        <label for="descricao">Descrição</label>
+                    </td>
+                    <td>
+                        <input type="text" id="descricao" name="descricao" value="{{ produto.descricao if produto.descricao else '' }}">
+                    </td>
+                </tr>
+            </table>
+
+            <div class="botoes">
+                <button type="submit" class="btn-edit">
+                    Salvar Alterações
+                </button>
+
+                <button 
+                    type="button" 
+                    class="btn-del"
+                    onclick="window.location.href='/empresa/painel'"
+                >
+                    Cancelar
+                </button>
+            </div>
+
         </form>
-    </div>
 
+    </div>
     <script src="{{ url_for('static', path='/script.js') }}"></script>
 </body>
 </html>

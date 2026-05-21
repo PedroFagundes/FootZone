@@ -1,0 +1,148 @@
+        .admin-container {
+            margin: 190px auto 40px auto; 
+            max-width: 1500px;
+            padding: 30px;
+            padding-top: 40px; 
+            background: #111;
+            border-radius: 10px;
+            color: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .admin-container h2 {
+            color: #d4af37;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        /* --- ESTILOS DO PREVIEW DA IMAGEM DO TÊNIS --- */
+        .avatar-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+            gap: 15px;
+        }
+
+        #avatar-pic {
+            width: 130px !important;
+            height: 130px !important;
+            border-radius: 8px !important; /* Arredondado suave para tênis (em vez de círculo de perfil) */
+            object-fit: cover !important;
+            border: 3px solid #d4af37 !important;
+            display: block;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .avatar-file-input {
+            display: none;
+        }
+
+        .avatar-label-btn {
+            display: inline-block;
+            font-size: 14px;
+            font-weight: bold;
+            background: #d4af37;
+            color: #111;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.1s ease;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .avatar-label-btn:hover {
+            background: #c49b2d;
+        }
+
+        .avatar-label-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* --- ESTRUTURA DA TABELA E CAMPOS --- */
+        table {
+            width: 700px;
+            border-collapse: collapse;
+            margin: 0 auto;
+        }
+
+        td {
+            padding: 12px;
+        }
+
+        label {
+            color: #d4af37;
+            font-weight: bold;
+        }
+
+        input {
+            width: 600px;
+            padding: 12px;
+            border: 1px solid #333;
+            border-radius: 6px;
+            background: #222;
+            color: white;
+            font-size: 15px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #d4af37;
+        }
+
+        /* --- BLOCO DE BOTÕES LADO A LADO (50% DE LARGURA) --- */
+        .botoes {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 35px;
+            width: 700px; 
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .btn-edit {
+            flex: 1;
+            background: #d4af37;
+            color: black;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            transition: background 0.2s ease, transform 0.1s ease;
+        }
+
+        .btn-edit:hover {
+            background: #c49b2d;
+        }
+
+        .btn-edit:active {
+            transform: scale(0.99);
+        }
+
+        .btn-del {
+            flex: 1;
+            background: #ff4f4f;
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            text-decoration: none;
+            text-align: center;
+            transition: background 0.2s ease, transform 0.1s ease;
+        }
+
+        .btn-del:hover {
+            background: #e04343;
+        }
+
+        .btn-del:active {
+            transform: scale(0.99);
+        }
