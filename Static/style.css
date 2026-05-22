@@ -28,11 +28,14 @@ body {
 
 /* --- COMPONENTES DE LOGIN E CADASTRO --- */
 .login-body-page {
-    height: 100vh;
-    width: 100vw;
+    min-height: 100vh;
+    width: 100%;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
+    /* AJUSTE: Aumentado para não comer o título */
+    padding-top: 150px;       
+    padding-bottom: 50px;
 }
 
 .login-caixa {
@@ -45,7 +48,42 @@ body {
     box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
 
-/* ABAS DE NAVEGAÇÃO (Transição entre Usuário/Empresa/Admin) */
+/* --- ESTILO DO AVATAR (PERFIL) --- */
+.avatar-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 25px;
+    width: 100%;
+}
+
+#avatar-pic {
+    width: 180px;      
+    height: 180px;     
+    border: 3px solid #d4af37; 
+    border-radius: 12px;       
+    object-fit: cover; 
+    object-position: center;
+    background-color: #1a1a1a;
+    display: block;
+    margin-bottom: 15px;
+}
+
+.avatar-label-btn {
+    background-color: #d4af37;
+    color: #000;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.avatar-label-btn:hover { background-color: #f1c40f; }
+.avatar-file-input { display: none; }
+
+/* ABAS DE NAVEGAÇÃO */
 .campos {
     display: flex;
     justify-content: space-around;
@@ -62,21 +100,12 @@ body {
     padding: 10px;
     border-radius: 5px;
     transition: 0.3s;
+    text-align: center;
 }
 
-.campoDesativado {
-    color: #888;
-    background: transparent;
-}
-
-.campoDesativado:hover {
-    color: #d4af37;
-}
-
-.campoAtivo {
-    color: #000 !important;
-    background: #d4af37;
-}
+.campoDesativado { color: #888; background: transparent; }
+.campoDesativado:hover { color: #d4af37; }
+.campoAtivo { color: #000 !important; background: #d4af37; }
 
 /* --- FORMULÁRIOS E INPUTS --- */
 h2 { color: white; margin-bottom: 20px; }
@@ -109,15 +138,12 @@ input:focus {
     margin-bottom: 10px;
 }
 
-/* CAMPO DE SENHA COM ÍCONE */
 .campo-senha {
     position: relative;
     width: 100%;
 }
 
-.campo-senha input {
-    padding-right: 40px;
-}
+.campo-senha input { padding-right: 40px; }
 
 .toggle-senha {
     position: absolute;
@@ -186,7 +212,7 @@ header {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 25px;
-    padding: 40px 20px;
+    padding: 140px 20px 40px; /* AJUSTE: Padding superior para não sumir atrás da nav */
     max-width: 1200px;
     width: 100%;
 }
@@ -216,9 +242,10 @@ header {
 .info { color: white; }
 .preco { color: #d4af37; font-weight: bold; font-size: 1.3rem; margin: 10px 0; }
 
-/* --- ESTILOS DO PAINEL ADMIN --- */
+/* --- ESTILOS DO PAINEL ADMIN E PERFIL --- */
 .admin-container { 
-    margin: 120px auto 50px auto; 
+    /* AJUSTE: margin-top aumentado para 160px para não comer o título */
+    margin: 160px auto 50px auto; 
     max-width: 1000px; 
     padding: 30px; 
     background: #111; 
@@ -248,25 +275,73 @@ header {
 
 .btn-del:hover { background: #cc0000; }
 
-/* MODAL ADMIN */
-#modalEditar { 
-    display:none; 
-    position:fixed; 
-    top:0; left:0; 
-    width:100%; height:100%; 
-    background:rgba(0,0,0,0.9); 
-    z-index: 9999; 
-}
+/* --- RESPONSIVIDADE CORRIGIDA --- */
+@media (max-width: 768px) {
+    .login-caixa {
+        width: 90%;
+        max-width: 350px;
+        padding: 20px;
+    }
 
-.modal-content {
-    margin: 10% auto; 
-    max-width: 400px;
-}
-
-/* --- RESPONSIVIDADE --- */
-@media (max-width: 600px) {
-    .vitrine { grid-template-columns: 1fr; }
-    .navbar { flex-direction: column; gap: 15px; }
+    .vitrine { grid-template-columns: 1fr; padding-top: 120px; }
+    .navbar { flex-direction: column; gap: 15px; padding: 15px; }
     .nav-links { gap: 10px; }
-    .login-caixa { width: 90%; }
+
+    .admin-container {
+        width: 95%;
+        /* AJUSTE: Mais espaço no mobile */
+        margin-top: 140px; 
+        padding: 15px;
+    }
+
+    .admin-container table, 
+    .admin-container tbody, 
+    .admin-container tr, 
+    .admin-container td {
+        display: block; 
+        width: 100%;
+    }
+    
+    .admin-container td {
+        padding: 10px 0;
+        border-bottom: 1px solid #222;
+    }
+
+    .admin-container label {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    #avatar-pic {
+        width: 150px;
+        height: 150px;
+    }
+}
+
+/* --- AJUSTE EXCLUSIVO PARA IPADS E TABLETS --- */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .login-caixa {
+        width: 60%;
+        max-width: 450px;
+        padding: 40px;
+        /* AJUSTE: margin-top maior no iPad */
+        margin: 160px auto 50px; 
+    }
+
+    h2 { font-size: 1.8rem; }
+
+    .vitrine { 
+        grid-template-columns: 1fr 1fr; 
+        gap: 20px;
+    }
+
+    input, button {
+        padding: 15px;
+        font-size: 16px;
+    }
+
+    .campos a {
+        font-size: 16px;
+        padding: 12px;
+    }
 }
