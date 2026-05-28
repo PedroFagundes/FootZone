@@ -55,6 +55,10 @@ CREATE TABLE empresa (
 -- 2. TABELAS DE PRODUTOS E ESTOQUE
 -- ======================================================
 
+-- ======================================================
+-- 2. TABELAS DE PRODUTOS E ESTOQUE (CORRIGIDA)
+-- ======================================================
+
 DROP TABLE IF EXISTS produto;
 CREATE TABLE produto (
     id_produto INT AUTO_INCREMENT PRIMARY KEY,
@@ -63,9 +67,10 @@ CREATE TABLE produto (
     preco DECIMAL(10,2) NOT NULL,
     tamanho VARCHAR(10),
     marca VARCHAR(100),
-    categoria VARCHAR(50), -- Categoria inserida de forma direta (Casual, Corrida, etc.)
+    categoria VARCHAR(50), 
     id_empresa INT NOT NULL,
-    imagem LONGBLOB,       -- Bytes da foto salvos nativamente via BLOB
+    imagem LONGBLOB,       
+    valor_transporte FLOAT DEFAULT NULL, -- Campo da prova já incluído com segurança
     CONSTRAINT fk_produto_empresa FOREIGN KEY (id_empresa) 
         REFERENCES empresa(id_empresa) ON DELETE CASCADE
 );

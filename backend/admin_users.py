@@ -1,5 +1,6 @@
 import os
 import base64
+import hashlib
 from fastapi import APIRouter, Request, HTTPException, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -24,7 +25,6 @@ async def listar_usuarios(request: Request):
         conn = conectar_banco()
         cursor = conn.cursor(dictionary=True)
         
-        # Puxa os dados garantindo que NULL vira string vazia
         query = """
             SELECT u.id_usuario, u.nome, u.email, 
                    COALESCE(c.cpf, '') as cpf, 
@@ -37,15 +37,19 @@ async def listar_usuarios(request: Request):
         cursor.execute(query)
         usuarios = cursor.fetchall()
         
-        return templates.TemplateResponse("admin_usuarios.html", {
-            "request": request, 
-            "usuarios": usuarios,
-            "usuario_nome": request.cookies.get("usuario_nome"),
-            "is_admin": True
-        })
+        # CORREÇÃO: Argumentos nomeados para evitar 'unhashable type dict'
+        return templates.TemplateResponse(
+            request=request,
+            name="admin_usuarios.html",
+            context={
+                "usuarios": usuarios,
+                "usuario_nome": request.cookies.get("usuario_nome"),
+                "is_admin": True
+            }
+        )
     except Exception as e:
         print(f"Erro ao listar usuários: {e}")
-        return HTMLResponse(content="Erro ao carregar banco de dados", status_code=500)
+        return HTMLResponse(content=f"Erro ao carregar banco de dados: {e}", status_code=500)
     finally:
         if conn: conn.close()
 
@@ -68,7 +72,6 @@ async def editar_usuario(
         
         cpf_limpo = ''.join(filter(str.isdigit, cpf))
 
-        # 1. Atualiza a tabela mestre usuario
         query_usuario = """
             UPDATE usuario 
             SET nome = %s, email = %s, cpf = %s, telefone = %s 
@@ -76,7 +79,6 @@ async def editar_usuario(
         """
         cursor.execute(query_usuario, (nome, email, cpf_limpo, telefone, id_usuario))
         
-        # 2. Atualiza a tabela filha cliente
         query_cliente = """
             UPDATE cliente 
             SET cpf = %s, telefone = %s 
@@ -85,12 +87,11 @@ async def editar_usuario(
         cursor.execute(query_cliente, (cpf_limpo, telefone, id_usuario))
 
         conn.commit()
-        print(f"Sucesso: Admin atualizou os dados do cliente ID {id_usuario}")
         
     except Exception as e:
         if conn: conn.rollback()
         print(f"Erro ao editar dados do cliente: {e}")
-        raise HTTPException(status_code=400, detail="Erro ao atualizar dados do cliente.")
+        raise HTTPException(status_code=400, detail="Erro ao atualizar dados.")
     finally:
         if conn: conn.close()
 
@@ -109,7 +110,6 @@ async def deletar_usuario(id: int, request: Request):
     except Exception as e:
         if conn: conn.rollback()
         print(f"Erro ao deletar: {e}")
-        raise HTTPException(status_code=400, detail="Erro ao excluir usuário.")
     finally:
         if conn: conn.close()
     return RedirectResponse(url="/admin/usuarios", status_code=303)
@@ -119,19 +119,47 @@ async def deletar_usuario(id: int, request: Request):
 async def page_catalogo_admin(request: Request):
     verificar_admin(request)
     conn = None
-    produtos = []
+    lista_final = []
     try:
         conn = conectar_banco()
         cursor = conn.cursor(dictionary=True, buffered=True)
+        
         query = "SELECT id_produto, nome, descricao, preco, tamanho, marca, categoria, imagem FROM produto"
         cursor.execute(query)
-        produtos_brutos = cursor.fetchall()
-        for p in produtos_brutos:
-            p['avatar_b64'] = base64.b64encode(p['imagem']).decode('utf-8') if p['imagem'] else None
-            produtos.append(p)
-        return templates.TemplateResponse("catalogoAdmin.html", {"request": request, "produtos": produtos, "usuario_nome": "Admin", "is_admin": True})
+        res_produtos = cursor.fetchall()
+        
+        for p in res_produtos:
+            img_bytes = p.get('imagem')
+            b64 = None
+            if img_bytes and isinstance(img_bytes, (bytes, bytearray)):
+                try:
+                    b64 = base64.b64encode(img_bytes).decode('utf-8')
+                except: b64 = None
+            
+            lista_final.append({
+                "id_produto": p["id_produto"],
+                "nome": p["nome"],
+                "descricao": p["descricao"],
+                "preco": p["preco"],
+                "tamanho": p["tamanho"],
+                "marca": p["marca"],
+                "categoria": p["categoria"],
+                "avatar_b64": b64
+            })
+            
+        # CORREÇÃO: Argumentos nomeados
+        return templates.TemplateResponse(
+            request=request,
+            name="catalogoAdmin.html",
+            context={
+                "produtos": lista_final,
+                "usuario_nome": "Admin",
+                "is_admin": True
+            }
+        )
     except Exception as e:
-        return HTMLResponse(content="Erro ao carregar catálogo", status_code=500)
+        print(f"ERRO NO CATALOGO ADMIN: {e}")
+        return HTMLResponse(content=f"Erro interno: {e}", status_code=500)
     finally:
         if conn: conn.close()
 

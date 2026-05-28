@@ -11,71 +11,75 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "..", "Template"))
 
 # --- MIDDLEWARE DE SEGURANÇA ---
 def verificar_empresa(request: Request):
-    if not request.cookies.get("usuario_nome") or request.cookies.get("usuario_nome") == "Admin":
+    usuario = request.cookies.get("usuario_nome")
+    if not usuario or usuario == "Admin":
         raise HTTPException(status_code=403, detail="Acesso restrito a empresas parceiras.")
 
-# --- ROTA: EXIBIR PAINEL ---
+# --- ROTA: PAINEL DA EMPRESA ---
 @router.get("/empresa/painel", response_class=HTMLResponse)
 async def painel_empresa(request: Request):
-    verificar_empresa(request)
-    empresa_nome = request.cookies.get("usuario_nome")
-    
+    nome_empresa = request.cookies.get("usuario_nome")
+    if not nome_empresa:
+        return RedirectResponse(url="/login/empresa", status_code=303)
+
     conn = None
     produtos = []
     try:
         conn = conectar_banco()
         cursor = conn.cursor(dictionary=True, buffered=True)
         
-        query = """
-            SELECT p.id_produto, p.nome, p.descricao, p.preco, p.tamanho, p.marca, p.categoria, p.imagem
-            FROM produto p 
-            INNER JOIN empresa e ON p.id_empresa = e.id_empresa
-            WHERE e.nome_empresa = %s
-        """
-        cursor.execute(query, (empresa_nome,))
+        # Seleciona apenas os produtos DESTA empresa
+        query = "SELECT * FROM produto WHERE marca = %s"
+        cursor.execute(query, (nome_empresa,))
         produtos_brutos = cursor.fetchall()
-        
+
         for p in produtos_brutos:
-            if p['imagem']:
+            if p.get('imagem'):
                 p['avatar_b64'] = base64.b64encode(p['imagem']).decode('utf-8')
             else:
                 p['avatar_b64'] = None
             produtos.append(p)
-            
+
+        return templates.TemplateResponse(
+            request=request, 
+            name="painel_empresa.html", 
+            context={
+                "produtos": produtos, 
+                "usuario": nome_empresa, 
+                "logado": True
+            }
+        )
     except Exception as e:
-        print(f"Erro ao carregar painel: {e}")
-        return HTMLResponse(content="Erro interno no servidor", status_code=500)
+        print(f"Erro no painel da empresa: {e}")
+        return HTMLResponse(content=f"Erro interno: {e}", status_code=500)
     finally:
-        if conn: 
-            conn.close()
+        if conn: conn.close()
 
-    return templates.TemplateResponse("painel_empresa.html", {
-        "request": request,
-        "produtos": produtos,
-        "usuario": empresa_nome,
-        "logado": True
-    })
-
-# --- ROTA: EXIBIR FORMULÁRIO DE CADASTRO ---
+# --- ROTA: EXIBIR FORMULÁRIO DE CADASTRO (GET) ---
 @router.get("/empresa/produtos/cadastrar", response_class=HTMLResponse)
 async def page_cadastrar_produto(request: Request):
     verificar_empresa(request)
-    return templates.TemplateResponse("cadastrar_produto.html", {
-        "request": request,
-        "usuario": request.cookies.get("usuario_nome"),
-        "logado": True
-    })
+    nome_empresa = request.cookies.get("usuario_nome")
+    
+    return templates.TemplateResponse(
+        request=request, 
+        name="cadastrar_produto.html", 
+        context={
+            "usuario": nome_empresa, 
+            "logado": True
+        }
+    )
 
 # --- ROTA: PROCESSAR CADASTRO DE PRODUTO (POST) ---
 @router.post("/empresa/produtos/cadastrar")
-async def cadastrar_produto(
+async def cadastrar_produto_post(
     request: Request,
     nome: str = Form(...),
     descricao: str = Form(None),
-    preco: float = Form(...),
+    preco: str = Form(...), 
     tamanho: str = Form(...),
-    marca: str = Form(...),
     categoria: str = Form(...),
+    valor_transporte: str = Form(None), # Campo da prova de autoria
     imagem_arquivo: UploadFile = File(None)
 ):
     verificar_empresa(request)
@@ -83,6 +87,16 @@ async def cadastrar_produto(
     
     conn = None
     try:
+        # Tratamento do Preço para evitar erro de banco (limpeza de R$, pontos e vírgulas)
+        preco_limpo = preco.replace("R$", "").replace(" ", "").replace(".", "").replace(",", ".").strip()
+        preco_float = float(preco_limpo)
+
+        # Tratamento do Valor de Transporte (Prova de Autoria)
+        transporte_float = None
+        if valor_transporte:
+            transporte_limpo = valor_transporte.replace("R$", "").replace(" ", "").replace(".", "").replace(",", ".").strip()
+            transporte_float = float(transporte_limpo)
+
         conn = conectar_banco()
         cursor = conn.cursor(dictionary=True, buffered=True)
         
@@ -100,22 +114,23 @@ async def cadastrar_produto(
                 bytes_imagem = conteudo
 
         query_inserir = """
-            INSERT INTO produto (nome, descricao, preco, tamanho, marca, categoria, id_empresa, imagem)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO produto (nome, descricao, preco, tamanho, marca, categoria, id_empresa, imagem, valor_transporte)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
-        cursor.execute(query_inserir, (nome, descricao, preco, tamanho, marca, categoria, id_empresa, bytes_imagem))
+        cursor.execute(query_inserir, (nome, descricao, preco_float, tamanho, empresa_nome, categoria, id_empresa, bytes_imagem, transporte_float))
         conn.commit()
         
+        return RedirectResponse(url="/empresa/painel", status_code=303)
+        
     except Exception as e:
-        if conn: 
-            conn.rollback()
-        print(f"Erro crítico ao salvar produto: {e}")
-        raise HTTPException(status_code=400, detail="Erro ao registrar produto no estoque.")
+        if conn: conn.rollback()
+        print(f"Erro ao salvar produto: {e}")
+        # Captura o erro de valor fora da faixa (Out of range) para o MySQL
+        if "1264" in str(e):
+            return RedirectResponse(url="/empresa/produtos/cadastrar?erro=valor_limite", status_code=303)
+        return RedirectResponse(url="/empresa/produtos/cadastrar?erro=1", status_code=303)
     finally:
-        if conn: 
-            conn.close()
-
-    return RedirectResponse(url="/empresa/painel", status_code=303)
+        if conn: conn.close()
 
 # --- ROTA: EXIBIR FORMULÁRIO DE EDIÇÃO (GET) ---
 @router.get("/empresa/produtos/editar/{id_produto}", response_class=HTMLResponse)
@@ -128,7 +143,6 @@ async def page_editar_produto(id_produto: int, request: Request):
         conn = conectar_banco()
         cursor = conn.cursor(dictionary=True, buffered=True)
         
-        # Garante que a empresa só edite um produto que realmente pertence a ela
         query = """
             SELECT p.* FROM produto p
             INNER JOIN empresa e ON p.id_empresa = e.id_empresa
@@ -138,19 +152,19 @@ async def page_editar_produto(id_produto: int, request: Request):
         produto = cursor.fetchone()
         
         if not produto:
-            raise HTTPException(status_code=404, detail="Produto não encontrado ou acesso negado.")
+            return RedirectResponse(url="/empresa/painel", status_code=303)
             
-        if produto['imagem']:
-            produto['avatar_b64'] = base64.b64encode(produto['imagem']).decode('utf-8')
-        else:
-            produto['avatar_b64'] = None
+        produto['avatar_b64'] = base64.b64encode(produto['imagem']).decode('utf-8') if produto['imagem'] else None
             
-        return templates.TemplateResponse("editar_produto.html", {
-            "request": request,
-            "produto": produto,
-            "usuario": empresa_nome,
-            "logado": True
-        })
+        return templates.TemplateResponse(
+            request=request,
+            name="editar_produto.html",
+            context={
+                "produto": produto,
+                "usuario": empresa_nome,
+                "logado": True
+            }
+        )
     except Exception as e:
         print(f"Erro ao abrir edição: {e}")
         return RedirectResponse(url="/empresa/painel", status_code=303)
@@ -163,10 +177,9 @@ async def editar_produto(
     id_produto: int,
     request: Request,
     nome: str = Form(...),
-    marca: str = Form(...),
     categoria: str = Form(...),
     tamanho: str = Form(...),
-    preco: float = Form(...),
+    preco: str = Form(...),
     descricao: str = Form(None),
     imagem_arquivo: UploadFile = File(None)
 ):
@@ -175,43 +188,39 @@ async def editar_produto(
     
     conn = None
     try:
+        preco_limpo = preco.replace("R$", "").replace(" ", "").replace(".", "").replace(",", ".").strip()
+        preco_float = float(preco_limpo)
+
         conn = conectar_banco()
         cursor = conn.cursor(dictionary=True, buffered=True)
         
-        # 1. Verifica a propriedade do produto por segurança antes do update
-        query_verificar = """
-            SELECT p.id_produto, p.imagem FROM produto p
-            INNER JOIN empresa e ON p.id_empresa = e.id_empresa
-            WHERE p.id_produto = %s AND e.nome_empresa = %s
-        """
-        cursor.execute(query_verificar, (id_produto, empresa_nome))
+        cursor.execute("SELECT imagem FROM produto WHERE id_produto = %s", (id_produto,))
         produto_atual = cursor.fetchone()
         
         if not produto_atual:
             raise HTTPException(status_code=403, detail="Ação não permitida.")
             
-        bytes_imagem = produto_atual['imagem'] # Se não enviar nova foto, mantém a antiga
-        
-        # 2. Se enviou uma nova foto válida, substitui os bytes
+        bytes_imagem = produto_atual['imagem']
         if imagem_arquivo and imagem_arquivo.filename:
             conteudo = await imagem_arquivo.read()
             if len(conteudo) > 0:
                 bytes_imagem = conteudo
                 
-        # 3. Executa o UPDATE dos dados modificados
         query_update = """
             UPDATE produto 
-            SET nome = %s, marca = %s, categoria = %s, tamanho = %s, preco = %s, descricao = %s, imagem = %s
+            SET nome = %s, categoria = %s, tamanho = %s, preco = %s, descricao = %s, imagem = %s
             WHERE id_produto = %s
         """
-        cursor.execute(query_update, (nome, marca, categoria, tamanho, preco, descricao, bytes_imagem, id_produto))
+        cursor.execute(query_update, (nome, categoria, tamanho, preco_float, descricao, bytes_imagem, id_produto))
         conn.commit()
         
+        return RedirectResponse(url="/empresa/painel", status_code=303)
+
     except Exception as e:
         if conn: conn.rollback()
         print(f"Erro ao atualizar produto: {e}")
-        raise HTTPException(status_code=400, detail="Erro ao atualizar dados do produto.")
+        if "1264" in str(e):
+            return RedirectResponse(url=f"/empresa/produtos/editar/{id_produto}?erro=valor_limite", status_code=303)
+        return RedirectResponse(url=f"/empresa/produtos/editar/{id_produto}?erro=1", status_code=303)
     finally:
         if conn: conn.close()
-        
-    return RedirectResponse(url="/empresa/painel", status_code=303)
