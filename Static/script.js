@@ -369,36 +369,39 @@
         }
     });
 
-    // --- LÓGICA DE AUTO-LOGOUT (TIMEOUT) ---
+    // --- LÓGICA DE AUTO-LOGOUT ---
+let timeout;
 
-    let timeout;
+function resetarTimer() {
+    if (timeout) clearTimeout(timeout);
+    
+    // 10 segundos para teste
+    const tempoLimite = 10000; 
 
-    function resetarTimer() {
-        // Limpa o timer anterior toda vez que o usuário interage
-        clearTimeout(timeout);
+    timeout = setTimeout(() => {
+        const path = window.location.pathname.toLowerCase();
+        
+        // Lista de páginas que o JS deve IGNORAR totalmente
+        const paginasPublicas = ['/login', '/cadastro', '/empresa', '/admin'];
+        
+        // Verifica se a URL atual contém alguma das palavras acima
+        const ehPaginaPublica = paginasPublicas.some(p => path.includes(p));
 
-        // SESSION_TIMEOUT definido no Python (10s para teste)
-        // Multiplicamos por 1000 para converter segundos em milissegundos
-        const tempoLimite = 10000; 
-
-        timeout = setTimeout(() => {
-            // Redireciona para o login com o parâmetro de aviso
+        if (!ehPaginaPublica && document.cookie.includes("usuario_nome")) {
             window.location.href = "/login?sessao_expirada=1";
-        }, tempoLimite);
-    }
+        }
+    }, tempoLimite);
+}
 
-    // Lista de eventos que indicam que o usuário está ativo
-    const eventosAtividade = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+// Inicialização
+const pathAtual = window.location.pathname.toLowerCase();
+const paginasPublicas = ['/login', '/cadastro', '/empresa', '/admin'];
+const ehPublica = paginasPublicas.some(p => pathAtual.includes(p));
 
-    // Se a página atual NÃO for uma página de login ou cadastro, ativa o monitoramento
-    const paginasPublicas = ['/login', '/admin', '/cadastro', '/login/empresa'];
-    const pathAtual = window.location.pathname;
-
-    if (!paginasPublicas.includes(pathAtual)) {
-        eventosAtividade.forEach(evento => {
-            document.addEventListener(evento, resetarTimer, true);
-        });
-
-        // Inicia o contador assim que a página carrega
-        resetarTimer();
-    }
+if (!ehPublica) {
+    const eventos = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    eventos.forEach(e => document.addEventListener(e, resetarTimer, true));
+    resetarTimer();
+} else {
+    console.log("Logout automático desativado para esta página pública.");
+}
