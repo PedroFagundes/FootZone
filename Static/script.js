@@ -369,7 +369,7 @@
         }
     });
 
-    // --- LÓGICA DE AUTO-LOGOUT ---
+    // --- LÓGICA DE AUTO-LOGOUT (TIMEOUT) - VERSÃO SIMPLIFICADA ---
 let timeout;
 
 function resetarTimer() {
@@ -380,28 +380,25 @@ function resetarTimer() {
 
     timeout = setTimeout(() => {
         const path = window.location.pathname.toLowerCase();
-        
-        // Lista de páginas que o JS deve IGNORAR totalmente
         const paginasPublicas = ['/login', '/cadastro', '/empresa', '/admin'];
         
-        // Verifica se a URL atual contém alguma das palavras acima
-        const ehPaginaPublica = paginasPublicas.some(p => path.includes(p));
+        // Verifica se a página atual NÃO é uma das públicas
+        const ehPaginaPrivada = !paginasPublicas.some(p => path === p || path === p + "/");
 
-        if (!ehPaginaPublica && document.cookie.includes("usuario_nome")) {
+        if (ehPaginaPrivada) {
+            console.log("Sessão expirada. Redirecionando...");
             window.location.href = "/login?sessao_expirada=1";
         }
     }, tempoLimite);
 }
 
-// Inicialização
-const pathAtual = window.location.pathname.toLowerCase();
-const paginasPublicas = ['/login', '/cadastro', '/empresa', '/admin'];
-const ehPublica = paginasPublicas.some(p => pathAtual.includes(p));
+// INICIALIZAÇÃO
+const eventosAtividade = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
 
-if (!ehPublica) {
-    const eventos = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
-    eventos.forEach(e => document.addEventListener(e, resetarTimer, true));
-    resetarTimer();
-} else {
-    console.log("Logout automático desativado para esta página pública.");
-}
+// Ativa o monitoramento globalmente, o setTimeout cuidará de ignorar as páginas públicas
+eventosAtividade.forEach(evento => {
+    document.addEventListener(evento, resetarTimer, true);
+});
+
+// Dispara o primeiro timer
+resetarTimer();

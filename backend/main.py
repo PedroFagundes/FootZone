@@ -107,7 +107,6 @@ async def page_catalogo(request: Request, busca: str = None):
             "avatar_b64": avatar_b64, "busca": busca
         }
     )
-    # Garante que o cookie de acesso seja atualizado e legível pelo JS
     response.set_cookie(key="ultimo_acesso", value=str(int(time.time())), httponly=False, path="/")
     return response
 
@@ -277,10 +276,16 @@ async def cadastrar_usuario(
     senha: str = Form(...)
 ):
     conn = conectar_banco()
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
     try:
-        senha_hash = hashlib.sha256(senha.encode()).hexdigest()
         cpf_limpo = ''.join(filter(str.isdigit, cpf))
+        
+        # VERIFICAÇÃO DE DUPLICIDADE: E-mail ou CPF
+        cursor.execute("SELECT id_usuario FROM usuario WHERE email = %s OR cpf = %s", (email, cpf_limpo))
+        if cursor.fetchone():
+            return RedirectResponse(url="/cadastro?erro_duplicado=1", status_code=303)
+
+        senha_hash = hashlib.sha256(senha.encode()).hexdigest()
         
         bytes_padrao = b""
         caminho_foto_padrao = os.path.join(BASE_DIR, "..", "Imagens", "icon.png")
@@ -310,7 +315,7 @@ async def cadastrar_usuario(
     except Exception as e:
         conn.rollback()
         print(f"Erro detalhado do Banco: {e}")
-        raise HTTPException(status_code=400, detail="Erro no cadastro.")
+        return RedirectResponse(url="/cadastro?erro_geral=1", status_code=303)
     finally:
         cursor.close()
         conn.close()
@@ -325,10 +330,16 @@ async def cadastrar_empresa(
     endereco: str = Form(...)
 ):
     conn = conectar_banco()
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
     try:
-        senha_hash = hashlib.sha256(senha.encode()).hexdigest()
         cnpj_limpo = ''.join(filter(str.isdigit, cnpj))
+        
+        # VERIFICAÇÃO DE DUPLICIDADE: E-mail ou CNPJ
+        cursor.execute("SELECT id_empresa FROM empresa WHERE email = %s OR cnpj = %s", (email, cnpj_limpo))
+        if cursor.fetchone():
+            return RedirectResponse(url="/empresa?erro_duplicado=1", status_code=303)
+
+        senha_hash = hashlib.sha256(senha.encode()).hexdigest()
         
         query = """
             INSERT INTO empresa (nome_empresa, cnpj, email, senha_hash, endereco, telefone) 
@@ -340,7 +351,7 @@ async def cadastrar_empresa(
     except Exception as e:
         conn.rollback()
         print(f"Erro empresa: {e}")
-        raise HTTPException(status_code=400, detail="Erro no cadastro da empresa.")
+        return RedirectResponse(url="/empresa?erro_geral=1", status_code=303)
     finally:
         cursor.close()
         conn.close()
@@ -356,20 +367,21 @@ async def editar_perfil(
 ):
     usuario_antigo = request.cookies.get("usuario_nome")
     if not usuario_antigo:
-        raise HTTPException(status_code=401, detail="Usuário não autenticado")
+        return RedirectResponse(url="/login", status_code=303)
 
     conn = conectar_banco()
     cursor = conn.cursor(dictionary=True, buffered=True)
     try:
+        # VERIFICAÇÃO DE DUPLICIDADE: Email já está em uso por OUTRO usuário?
         cursor.execute("SELECT id_usuario FROM usuario WHERE email = %s AND nome != %s", (email, usuario_antigo))
-        email_existente = cursor.fetchone()
-        if email_existente:
-            raise HTTPException(status_code=400, detail="E-mail já está em uso")
+        if cursor.fetchone():
+            # Redireciona com erro visual para o perfil
+            return RedirectResponse(url="/perfil?erro_email_em_uso=1", status_code=303)
 
         cursor.execute("SELECT id_usuario, avatar FROM usuario WHERE nome = %s", (usuario_antigo,))
         user_atual = cursor.fetchone()
         if not user_atual:
-            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+            return RedirectResponse(url="/logout", status_code=303)
         
         id_usuario = user_atual['id_usuario']
         bytes_imagem = user_atual['avatar'] 
@@ -398,13 +410,14 @@ async def editar_perfil(
     except Exception as e:
         conn.rollback()
         print(f"ERRO CRÍTICO NO BANCO: {str(e)}")
-        raise HTTPException(status_code=400, detail=f"Erro interno: {str(e)}")
+        return RedirectResponse(url="/perfil?erro_geral=1", status_code=303)
     finally:
         cursor.close()
         conn.close()
 
     response = RedirectResponse(url="/perfil", status_code=303)
     response.set_cookie(key="usuario_nome", value=nome, httponly=True, path="/")
+    response.set_cookie(key="ultimo_acesso", value=str(int(time.time())), httponly=False, path="/")
     return response
 
 @app.get("/logout")

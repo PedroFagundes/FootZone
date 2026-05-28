@@ -9,6 +9,15 @@
 <body>
     <div class="background"></div>
     <div class="login-caixa">
+        <div id="alerta-erro" style="display: none; color: #ff4f4f; background: rgba(255, 79, 79, 0.1); padding: 12px; border-radius: 8px; border: 1px solid #ff4f4f; margin-bottom: 20px; font-size: 14px; font-weight: bold; text-align: center;">
+    Este CPF/CNPJ ou E-mail já está cadastrado em nosso sistema.
+</div>
+
+<script>
+    if (window.location.search.includes('erro_duplicado=1')) {
+        document.getElementById('alerta-erro').style.display = 'block';
+    }
+</script>
         <div class="campos">
             <a href="/login" class="campoAtivo">Usuário</a>
             <a href="empresa" class="campoDesativado">Empresa</a>
