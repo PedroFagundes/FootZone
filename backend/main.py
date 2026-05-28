@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from db import conectar_banco 
+import random
 
 # --- CONFIGURAÇÕES DE SESSÃO ---
 SESSION_TIMEOUT = 10
@@ -221,12 +222,14 @@ async def comprar_produto(id_produto: int, request: Request):
         conn = conectar_banco()
         cursor = conn.cursor(dictionary=True, buffered=True)
         
+        # 1. Busca o ID do usuário
         cursor.execute("SELECT id_usuario FROM usuario WHERE nome = %s", (usuario_nome,))
         user = cursor.fetchone()
         if not user:
             raise HTTPException(status_code=404, detail="Usuário não encontrado.")
         id_cliente = user['id_usuario']
         
+        # 2. Busca dados do produto antes de deletar
         cursor.execute("SELECT nome, marca, tamanho, categoria, preco FROM produto WHERE id_produto = %s", (id_produto,))
         produto = cursor.fetchone()
         if not produto:
@@ -234,36 +237,49 @@ async def comprar_produto(id_produto: int, request: Request):
         
         preco_total = produto['preco']
         
+        # 3. Cria o pedido
         query_pedido = """
             INSERT INTO pedido (data_pedido, status, forma_pagamento, total, id_cliente)
             VALUES (CURRENT_TIMESTAMP, 'pago', 'pix', %s, %s)
         """
         cursor.execute(query_pedido, (preco_total, id_cliente))
-        id_pedido = cursor.lastrowid
+        id_pedido = cursor.lastrowid # Pega o ID gerado pelo banco
         
+        # 4. Adiciona o item ao pedido
         query_item = """
             INSERT INTO item_pedido (id_pedido, id_produto, quantidade, preco_unitario)
             VALUES (%s, %s, 1, %s)
         """
         cursor.execute(query_item, (id_pedido, id_produto, preco_total))
         
+        # 5. Remove o produto do estoque (venda finalizada)
         cursor.execute("DELETE FROM produto WHERE id_produto = %s", (id_produto,))
+        
         conn.commit()
         
-        return templates.TemplateResponse("compra_sucesso.html", {
-            "request": request,
+        # CONTEXTO PARA O TEMPLATE
+        meu_contexto = {
             "id_pedido": id_pedido,
             "produto_nome": produto['nome'],
             "produto_marca": produto['marca'],
             "produto_tamanho": produto['tamanho'],
             "produto_categoria": produto['categoria'],
-            "produto_preco": preco_total
-        })
+            "produto_preco": preco_total,
+            "usuario_nome": usuario_nome
+        }
+
+        # CORREÇÃO DO ERRO: Argumentos nomeados
+        return templates.TemplateResponse(
+            request=request, 
+            name="compra_sucesso.html", 
+            context=meu_contexto
+        )
         
     except Exception as e:
         if conn: conn.rollback()
         print(f"Erro ao finalizar a compra: {e}")
-        raise HTTPException(status_code=400, detail="Não foi possível concluir o pedido.")
+        # Retorna erro 400 mas com detalhe para o log
+        raise HTTPException(status_code=400, detail=f"Erro técnico: {e}")
     finally:
         if conn: conn.close()
 

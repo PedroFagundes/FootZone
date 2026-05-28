@@ -369,36 +369,36 @@
         }
     });
 
-    // --- LÓGICA DE AUTO-LOGOUT (TIMEOUT) - VERSÃO SIMPLIFICADA ---
+    // --- LÓGICA DE AUTO-LOGOUT (TIMEOUT) - VERSÃO SEM COOKIE ---
 let timeout;
 
 function resetarTimer() {
     if (timeout) clearTimeout(timeout);
     
-    // 10 segundos para teste
-    const tempoLimite = 10000; 
+    const tempoLimite = 10000; // 10 segundos para teste
 
     timeout = setTimeout(() => {
         const path = window.location.pathname.toLowerCase();
-        const paginasPublicas = ['/login', '/cadastro', '/empresa', '/admin'];
         
-        // Verifica se a página atual NÃO é uma das públicas
-        const ehPaginaPrivada = !paginasPublicas.some(p => path === p || path === p + "/");
+        // Se a URL contiver 'login' ou 'cadastro', NÃO fazemos nada.
+        const ehPaginaDeAcesso = path.includes('login') || path.includes('cadastro') || path === '/admin' || path === '/admin/';
 
-        if (ehPaginaPrivada) {
-            console.log("Sessão expirada. Redirecionando...");
+        console.log("Verificando inatividade na página:", path);
+
+        if (!ehPaginaDeAcesso) {
+            console.warn("Inatividade detectada. Redirecionando forçadamente...");
             window.location.href = "/login?sessao_expirada=1";
         }
     }, tempoLimite);
 }
 
-// INICIALIZAÇÃO
+// INICIALIZAÇÃO EM TODAS AS PÁGINAS
 const eventosAtividade = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
 
-// Ativa o monitoramento globalmente, o setTimeout cuidará de ignorar as páginas públicas
 eventosAtividade.forEach(evento => {
     document.addEventListener(evento, resetarTimer, true);
 });
 
-// Dispara o primeiro timer
+// Inicia o cronómetro assim que a página carrega
 resetarTimer();
+console.log("Monitoramento de inatividade carregado e ativo.");
