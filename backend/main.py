@@ -56,10 +56,11 @@ def get_usuario_logado(request: Request):
 async def gerenciar_sessao_global(request: Request, call_next):
     path = request.url.path
     
-    # CORREÇÃO CRÍTICA: Liberados também os caminhos POST que processam as credenciais de entrada
+    # CORREÇÃO: Liberadas também as rotas de cadastro para não dar Timeout ao registrar
     rotas_publicas = [
-        "/login", "/login/empresa", "/admin", "/cadastro", "/logout",
-        "/login/usuario", "/login/admin", "/login/empresa"  # <-- ADICIONADOS
+        "/login", "/login/empresa", "/admin", "/cadastro", "/logout", "/empresa",
+        "/login/usuario", "/login/admin", "/login/empresa",
+        "/cadastrar/usuario", "/cadastrar/empresa" # <-- ADICIONADOS PARA FUNCIONAR
     ]
     
     if path in rotas_publicas or path.startswith("/Static") or path.startswith("/Imagens"):
