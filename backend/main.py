@@ -49,37 +49,8 @@ def get_usuario_logado(request: Request):
         
     return usuario
 
-# ======================================================
-# MIDDLEWARE: VALIDAÇÃO E RENOVAÇÃO DE SESSÃO GLOBAL
-# ======================================================
-@app.middleware("http")
-async def gerenciar_sessao_global(request: Request, call_next):
-    path = request.url.path
-    
-    # CORREÇÃO: Liberadas também as rotas de cadastro para não dar Timeout ao registrar
-    rotas_publicas = [
-        "/login", "/login/empresa", "/admin", "/cadastro", "/logout", "/empresa",
-        "/login/usuario", "/login/admin", "/login/empresa",
-        "/cadastrar/usuario", "/cadastrar/empresa" # <-- ADICIONADOS PARA FUNCIONAR
-    ]
-    
-    if path in rotas_publicas or path.startswith("/Static") or path.startswith("/Imagens"):
-        return await call_next(request)
-
-    # Executa a checagem manual de tempo para páginas internas (/catalogo, /perfil, etc.)
-    usuario_nome = get_usuario_logado(request)
-    if not usuario_nome or usuario_nome == "":
-        response = RedirectResponse(url="/login?sessao_expirada=1", status_code=303)
-        response.delete_cookie(key="usuario_nome", path="/")
-        response.delete_cookie(key="ultimo_acesso", path="/")
-        return response
-
-    # Se passou, deixa processar a página interna
-    response = await call_next(request)
-    
-    # Mantém o httponly=False para o Javascript conseguir ler os 10s no front
-    response.set_cookie(key="ultimo_acesso", value=str(int(time.time())), httponly=False, path="/")
-    return response
+def usuario_logado(request: Request):
+    return request.cookies.get("usuario_nome") is not None
 
 
 # --- ROTAS DE NAVEGAÇÃO (GET) ---
@@ -88,6 +59,9 @@ async def gerenciar_sessao_global(request: Request, call_next):
 @app.get("/catalogo", response_class=HTMLResponse)
 async def page_catalogo(request: Request, busca: str = None):
     usuario_nome = request.cookies.get("usuario_nome")
+    if not usuario_nome:
+        return RedirectResponse(url="/login", status_code=303)
+        
     produtos = []
     avatar_b64 = None 
 
@@ -125,7 +99,7 @@ async def page_catalogo(request: Request, busca: str = None):
     except Exception as e: 
         print(f"Erro no catálogo: {e}")
         
-    return templates.TemplateResponse(
+    response = templates.TemplateResponse(
         request=request, 
         name="catalogo.html", 
         context={
@@ -133,10 +107,16 @@ async def page_catalogo(request: Request, busca: str = None):
             "avatar_b64": avatar_b64, "busca": busca
         }
     )
+    # Garante que o cookie de acesso seja atualizado e legível pelo JS
+    response.set_cookie(key="ultimo_acesso", value=str(int(time.time())), httponly=False, path="/")
+    return response
 
 @app.get("/perfil", response_class=HTMLResponse)
 async def page_perfil(request: Request):
     usuario_nome = request.cookies.get("usuario_nome")
+    if not usuario_nome:
+        return RedirectResponse(url="/login", status_code=303)
+    
     dados_usuario = None
     try:
         conn = conectar_banco()
@@ -164,10 +144,12 @@ async def page_perfil(request: Request):
     if not dados_usuario:
         return RedirectResponse(url="/logout", status_code=303)
 
-    return templates.TemplateResponse(
+    response = templates.TemplateResponse(
         request=request, name="perfil.html", 
         context={"usuario": usuario_nome, "dados_usuario": dados_usuario, "logado": True}
     )
+    response.set_cookie(key="ultimo_acesso", value=str(int(time.time())), httponly=False, path="/")
+    return response
 
 # --- PROCESSAMENTO DE DADOS (POST) ---
 
