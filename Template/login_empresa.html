@@ -14,7 +14,14 @@
             <a href="/login/empresa" class="campoAtivo">Empresa</a>
             <a href="/admin" class="campoDesativado">Admin</a>
         </div>
-
+<div id="alerta-sessao" style="display: none; color: #d4af37; background: rgba(212, 175, 55, 0.1); padding: 12px; border-radius: 8px; border: 1px solid #d4af37; margin-bottom: 20px; font-size: 14px; font-weight: bold; text-align: center;">
+    ⚠️ Sua sessão expirou por inatividade. Entre novamente.
+</div>
+<script>
+    if (window.location.search.includes('sessao_expirada=1')) {
+        document.getElementById('alerta-sessao').style.display = 'block';
+    }
+</script>
         <h2>Painel da Empresa</h2>
 
         {% if request.query_params.get('erro') %}
