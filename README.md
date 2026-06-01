@@ -7,7 +7,7 @@ preparação do ambiente
 
 # FootZone MarketPlace
 
-O FutZone é uma plataforma de marketplace focada exclusivamente no universo dos tênis (sneakers). O objetivo é conectar compradores e vendedores, oferecendo uma experiência fluida, segura e estilosa para quem busca desde modelos casuais até as edições limitadas mais raras do mercado.
+O FootZone é uma plataforma de marketplace focada exclusivamente no universo dos tênis (sneakers). O objetivo é conectar compradores e vendedores, oferecendo uma experiência fluida, segura e estilosa para quem busca desde modelos casuais até as edições limitadas mais raras do mercado.
 ## Funcionalidades
 
 ### Para Compradores
